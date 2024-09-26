@@ -41,9 +41,12 @@ inputs:
   security:
     required: false
     description: "strict or loose"
+  timeout:
+    required: false
+    description: "Timeout in milliseconds for FTP operations"
 runs:
-  using: "node12"
+  using: "node20"
   main: "dist/index.js"
 branding:
   icon: "upload-cloud"
-  color: "orange"
+  color: "blue"

@@ -20,10 +20,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Get latest code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     
     - name: 📂 Sync files
-      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ftp.samkirkland.com
         username: myFtpUserName
@@ -33,7 +33,7 @@ jobs:
 ---
 
 ### Requirements
-- You must have ftp access to your server. If your host requires ssh please use my web-deploy action (coming soon)
+- You must have ftp access to your server. If your host allows or requires ssh please use my [web-deploy](https://github.com/SamKirkland/web-deploy) action
 - Some web hosts change the default port (21), check with your host for your port number
 
 ---
@@ -67,9 +67,10 @@ I strongly recommend you store your `password` as a secret.
 | `state-name`            | No       | `folder/.sync-state.json`     | `.ftp-deploy-sync-state.json` | Path and name of the state file - this file is used to track which files have been deployed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `dry-run`               | No       | `true`                        | `false`                       | Prints which modifications will be made with current config options, but doesn't actually make any changes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `dangerous-clean-slate` | No       | `true`                        | `false`                       | Deletes ALL contents of server-dir, even items in excluded with 'exclude' argument                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `exclude`               | No       | [See Example](#exclude-files) | [See Example](#exclude-files) | An array of glob patterns, these files will not be included in the publish/delete process. [List MUST be in this format](#exclude-files). You can use [a glob tester](https://www.digitalocean.com/community/tools/glob?comments=true&glob=%2A%2A%2F.git%2A%2F%2A%2A&matches=false&tests=test%2Fsam&tests=.git%2F&tests=.github%2F&tests=.git%2Ftest&tests=.gitattributes&tests=.gitignore&tests=.git%2Fconfig&tests=.git%2Ftest%2Ftest&tests=.github%2Fworkflows%2Fmain.yml&tests=test%2F.git%2Fworkflows%2Fmain.yml&tests=node_modules%2Ffolder%2F&tests=node_modules%2Fotherfolder%2F&tests=subfolder%2Fnode_modules%2F) to test your pattern(s). |
+| `exclude`               | No       | [See Example](#exclude-files) | [See Example](#exclude-files) | An array of glob patterns, these files will not be included in the publish/delete process. [List MUST be in this format](#exclude-files). You can use [a glob tester](https://www.digitalocean.com/community/tools/glob?comments=true&glob=%2A%2A%2F.git%2A%2F%2A%2A&matches=false&tests=test%2Fsam&tests=.git%2F%0D&tests=.github%2F%0D&tests=.git%2Ftest%0D&tests=.gitattributes%0D&tests=.gitignore%0D&tests=.git%2Fconfig%0D&tests=.git%2Ftest%2Ftest&tests=.github%2Fworkflows%2Fmain.yml&tests=node_modules%2Ffolder%2F%0D&tests=node_modules%2Fotherfolder%2F%0D&tests=subfolder%2Fnode_modules%2F) to test your pattern(s). |
 | `log-level`             | No       | `minimal`                     | `standard`                    | `minimal`: only important info, `standard`: important info and basic file changes, `verbose`: print everything the script is doing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `security`              | No       | `strict`                      | `loose`                       | `strict`: Reject any connection which is not authorized with the list of supplied CAs. `loose`: Allow connection even when the domain is not certificate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `timeout`               | No       | `60000`                       | `30000`                       | Timeout in milliseconds for FTP operations                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 
 # Common Examples
@@ -85,12 +86,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Get latest code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
-    - name: Use Node.js 14
+    - name: Use Node.js 16
       uses: actions/setup-node@v2
       with:
-        node-version: '14'
+        node-version: '16'
       
     - name: 🔨 Build Project
       run: |
@@ -98,7 +99,7 @@ jobs:
         npm run build
     
     - name: 📂 Sync files
-      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ftp.samkirkland.com
         username: myFtpUserName
@@ -115,10 +116,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Get latest code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: 📂 Sync files
-      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ftp.samkirkland.com
         username: myFtpUserName
@@ -138,10 +139,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Get latest code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: 📂 Sync files
-      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ftp.samkirkland.com
         username: myFtpUserName
@@ -160,10 +161,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Get latest code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: 📂 Sync files
-      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ftp.samkirkland.com
         username: myFtpUserName

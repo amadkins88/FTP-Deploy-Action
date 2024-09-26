@@ -27,7 +27,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.issue = exports.issueCommand = void 0;
-const os = __importStar(__nccwpck_require__(2087));
+const os = __importStar(__nccwpck_require__(2037));
 const utils_1 = __nccwpck_require__(5278);
 /**
  * Commands
@@ -138,8 +138,9 @@ exports.getIDToken = exports.getState = exports.saveState = exports.group = expo
 const command_1 = __nccwpck_require__(7351);
 const file_command_1 = __nccwpck_require__(717);
 const utils_1 = __nccwpck_require__(5278);
-const os = __importStar(__nccwpck_require__(2087));
-const path = __importStar(__nccwpck_require__(5622));
+const os = __importStar(__nccwpck_require__(2037));
+const path = __importStar(__nccwpck_require__(1017));
+const uuid_1 = __nccwpck_require__(5840);
 const oidc_utils_1 = __nccwpck_require__(8041);
 /**
  * The code to exit an action
@@ -169,7 +170,14 @@ function exportVariable(name, val) {
     process.env[name] = convertedVal;
     const filePath = process.env['GITHUB_ENV'] || '';
     if (filePath) {
-        const delimiter = '_GitHubActionsFileCommandDelimeter_';
+        const delimiter = `ghadelimiter_${uuid_1.v4()}`;
+        // These should realistically never happen, but just in case someone finds a way to exploit uuid generation let's not allow keys or values that contain the delimiter.
+        if (name.includes(delimiter)) {
+            throw new Error(`Unexpected input: name should not contain the delimiter "${delimiter}"`);
+        }
+        if (convertedVal.includes(delimiter)) {
+            throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
+        }
         const commandValue = `${name}<<${delimiter}${os.EOL}${convertedVal}${os.EOL}${delimiter}`;
         file_command_1.issueCommand('ENV', commandValue);
     }
@@ -415,6 +423,23 @@ function getIDToken(aud) {
     });
 }
 exports.getIDToken = getIDToken;
+/**
+ * Summary exports
+ */
+var summary_1 = __nccwpck_require__(1327);
+Object.defineProperty(exports, "summary", ({ enumerable: true, get: function () { return summary_1.summary; } }));
+/**
+ * @deprecated use core.summary
+ */
+var summary_2 = __nccwpck_require__(1327);
+Object.defineProperty(exports, "markdownSummary", ({ enumerable: true, get: function () { return summary_2.markdownSummary; } }));
+/**
+ * Path exports
+ */
+var path_utils_1 = __nccwpck_require__(2981);
+Object.defineProperty(exports, "toPosixPath", ({ enumerable: true, get: function () { return path_utils_1.toPosixPath; } }));
+Object.defineProperty(exports, "toWin32Path", ({ enumerable: true, get: function () { return path_utils_1.toWin32Path; } }));
+Object.defineProperty(exports, "toPlatformPath", ({ enumerable: true, get: function () { return path_utils_1.toPlatformPath; } }));
 //# sourceMappingURL=core.js.map
 
 /***/ }),
@@ -448,8 +473,8 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.issueCommand = void 0;
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const fs = __importStar(__nccwpck_require__(5747));
-const os = __importStar(__nccwpck_require__(2087));
+const fs = __importStar(__nccwpck_require__(7147));
+const os = __importStar(__nccwpck_require__(2037));
 const utils_1 = __nccwpck_require__(5278);
 function issueCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
@@ -484,8 +509,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.OidcClient = void 0;
-const http_client_1 = __nccwpck_require__(9925);
-const auth_1 = __nccwpck_require__(3702);
+const http_client_1 = __nccwpck_require__(6255);
+const auth_1 = __nccwpck_require__(5526);
 const core_1 = __nccwpck_require__(2186);
 class OidcClient {
     static createHttpClient(allowRetry = true, maxRetry = 10) {
@@ -552,6 +577,361 @@ exports.OidcClient = OidcClient;
 
 /***/ }),
 
+/***/ 2981:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.toPlatformPath = exports.toWin32Path = exports.toPosixPath = void 0;
+const path = __importStar(__nccwpck_require__(1017));
+/**
+ * toPosixPath converts the given path to the posix form. On Windows, \\ will be
+ * replaced with /.
+ *
+ * @param pth. Path to transform.
+ * @return string Posix path.
+ */
+function toPosixPath(pth) {
+    return pth.replace(/[\\]/g, '/');
+}
+exports.toPosixPath = toPosixPath;
+/**
+ * toWin32Path converts the given path to the win32 form. On Linux, / will be
+ * replaced with \\.
+ *
+ * @param pth. Path to transform.
+ * @return string Win32 path.
+ */
+function toWin32Path(pth) {
+    return pth.replace(/[/]/g, '\\');
+}
+exports.toWin32Path = toWin32Path;
+/**
+ * toPlatformPath converts the given path to a platform-specific path. It does
+ * this by replacing instances of / and \ with the platform-specific path
+ * separator.
+ *
+ * @param pth The path to platformize.
+ * @return string The platform-specific path.
+ */
+function toPlatformPath(pth) {
+    return pth.replace(/[/\\]/g, path.sep);
+}
+exports.toPlatformPath = toPlatformPath;
+//# sourceMappingURL=path-utils.js.map
+
+/***/ }),
+
+/***/ 1327:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.summary = exports.markdownSummary = exports.SUMMARY_DOCS_URL = exports.SUMMARY_ENV_VAR = void 0;
+const os_1 = __nccwpck_require__(2037);
+const fs_1 = __nccwpck_require__(7147);
+const { access, appendFile, writeFile } = fs_1.promises;
+exports.SUMMARY_ENV_VAR = 'GITHUB_STEP_SUMMARY';
+exports.SUMMARY_DOCS_URL = 'https://docs.github.com/actions/using-workflows/workflow-commands-for-github-actions#adding-a-job-summary';
+class Summary {
+    constructor() {
+        this._buffer = '';
+    }
+    /**
+     * Finds the summary file path from the environment, rejects if env var is not found or file does not exist
+     * Also checks r/w permissions.
+     *
+     * @returns step summary file path
+     */
+    filePath() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._filePath) {
+                return this._filePath;
+            }
+            const pathFromEnv = process.env[exports.SUMMARY_ENV_VAR];
+            if (!pathFromEnv) {
+                throw new Error(`Unable to find environment variable for $${exports.SUMMARY_ENV_VAR}. Check if your runtime environment supports job summaries.`);
+            }
+            try {
+                yield access(pathFromEnv, fs_1.constants.R_OK | fs_1.constants.W_OK);
+            }
+            catch (_a) {
+                throw new Error(`Unable to access summary file: '${pathFromEnv}'. Check if the file has correct read/write permissions.`);
+            }
+            this._filePath = pathFromEnv;
+            return this._filePath;
+        });
+    }
+    /**
+     * Wraps content in an HTML tag, adding any HTML attributes
+     *
+     * @param {string} tag HTML tag to wrap
+     * @param {string | null} content content within the tag
+     * @param {[attribute: string]: string} attrs key-value list of HTML attributes to add
+     *
+     * @returns {string} content wrapped in HTML element
+     */
+    wrap(tag, content, attrs = {}) {
+        const htmlAttrs = Object.entries(attrs)
+            .map(([key, value]) => ` ${key}="${value}"`)
+            .join('');
+        if (!content) {
+            return `<${tag}${htmlAttrs}>`;
+        }
+        return `<${tag}${htmlAttrs}>${content}</${tag}>`;
+    }
+    /**
+     * Writes text in the buffer to the summary buffer file and empties buffer. Will append by default.
+     *
+     * @param {SummaryWriteOptions} [options] (optional) options for write operation
+     *
+     * @returns {Promise<Summary>} summary instance
+     */
+    write(options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const overwrite = !!(options === null || options === void 0 ? void 0 : options.overwrite);
+            const filePath = yield this.filePath();
+            const writeFunc = overwrite ? writeFile : appendFile;
+            yield writeFunc(filePath, this._buffer, { encoding: 'utf8' });
+            return this.emptyBuffer();
+        });
+    }
+    /**
+     * Clears the summary buffer and wipes the summary file
+     *
+     * @returns {Summary} summary instance
+     */
+    clear() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.emptyBuffer().write({ overwrite: true });
+        });
+    }
+    /**
+     * Returns the current summary buffer as a string
+     *
+     * @returns {string} string of summary buffer
+     */
+    stringify() {
+        return this._buffer;
+    }
+    /**
+     * If the summary buffer is empty
+     *
+     * @returns {boolen} true if the buffer is empty
+     */
+    isEmptyBuffer() {
+        return this._buffer.length === 0;
+    }
+    /**
+     * Resets the summary buffer without writing to summary file
+     *
+     * @returns {Summary} summary instance
+     */
+    emptyBuffer() {
+        this._buffer = '';
+        return this;
+    }
+    /**
+     * Adds raw text to the summary buffer
+     *
+     * @param {string} text content to add
+     * @param {boolean} [addEOL=false] (optional) append an EOL to the raw text (default: false)
+     *
+     * @returns {Summary} summary instance
+     */
+    addRaw(text, addEOL = false) {
+        this._buffer += text;
+        return addEOL ? this.addEOL() : this;
+    }
+    /**
+     * Adds the operating system-specific end-of-line marker to the buffer
+     *
+     * @returns {Summary} summary instance
+     */
+    addEOL() {
+        return this.addRaw(os_1.EOL);
+    }
+    /**
+     * Adds an HTML codeblock to the summary buffer
+     *
+     * @param {string} code content to render within fenced code block
+     * @param {string} lang (optional) language to syntax highlight code
+     *
+     * @returns {Summary} summary instance
+     */
+    addCodeBlock(code, lang) {
+        const attrs = Object.assign({}, (lang && { lang }));
+        const element = this.wrap('pre', this.wrap('code', code), attrs);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML list to the summary buffer
+     *
+     * @param {string[]} items list of items to render
+     * @param {boolean} [ordered=false] (optional) if the rendered list should be ordered or not (default: false)
+     *
+     * @returns {Summary} summary instance
+     */
+    addList(items, ordered = false) {
+        const tag = ordered ? 'ol' : 'ul';
+        const listItems = items.map(item => this.wrap('li', item)).join('');
+        const element = this.wrap(tag, listItems);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML table to the summary buffer
+     *
+     * @param {SummaryTableCell[]} rows table rows
+     *
+     * @returns {Summary} summary instance
+     */
+    addTable(rows) {
+        const tableBody = rows
+            .map(row => {
+            const cells = row
+                .map(cell => {
+                if (typeof cell === 'string') {
+                    return this.wrap('td', cell);
+                }
+                const { header, data, colspan, rowspan } = cell;
+                const tag = header ? 'th' : 'td';
+                const attrs = Object.assign(Object.assign({}, (colspan && { colspan })), (rowspan && { rowspan }));
+                return this.wrap(tag, data, attrs);
+            })
+                .join('');
+            return this.wrap('tr', cells);
+        })
+            .join('');
+        const element = this.wrap('table', tableBody);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds a collapsable HTML details element to the summary buffer
+     *
+     * @param {string} label text for the closed state
+     * @param {string} content collapsable content
+     *
+     * @returns {Summary} summary instance
+     */
+    addDetails(label, content) {
+        const element = this.wrap('details', this.wrap('summary', label) + content);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML image tag to the summary buffer
+     *
+     * @param {string} src path to the image you to embed
+     * @param {string} alt text description of the image
+     * @param {SummaryImageOptions} options (optional) addition image attributes
+     *
+     * @returns {Summary} summary instance
+     */
+    addImage(src, alt, options) {
+        const { width, height } = options || {};
+        const attrs = Object.assign(Object.assign({}, (width && { width })), (height && { height }));
+        const element = this.wrap('img', null, Object.assign({ src, alt }, attrs));
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML section heading element
+     *
+     * @param {string} text heading text
+     * @param {number | string} [level=1] (optional) the heading level, default: 1
+     *
+     * @returns {Summary} summary instance
+     */
+    addHeading(text, level) {
+        const tag = `h${level}`;
+        const allowedTag = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)
+            ? tag
+            : 'h1';
+        const element = this.wrap(allowedTag, text);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML thematic break (<hr>) to the summary buffer
+     *
+     * @returns {Summary} summary instance
+     */
+    addSeparator() {
+        const element = this.wrap('hr', null);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML line break (<br>) to the summary buffer
+     *
+     * @returns {Summary} summary instance
+     */
+    addBreak() {
+        const element = this.wrap('br', null);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML blockquote to the summary buffer
+     *
+     * @param {string} text quote text
+     * @param {string} cite (optional) citation url
+     *
+     * @returns {Summary} summary instance
+     */
+    addQuote(text, cite) {
+        const attrs = Object.assign({}, (cite && { cite }));
+        const element = this.wrap('blockquote', text, attrs);
+        return this.addRaw(element).addEOL();
+    }
+    /**
+     * Adds an HTML anchor tag to the summary buffer
+     *
+     * @param {string} text link text/content
+     * @param {string} href hyperlink
+     *
+     * @returns {Summary} summary instance
+     */
+    addLink(text, href) {
+        const element = this.wrap('a', text, { href });
+        return this.addRaw(element).addEOL();
+    }
+}
+const _summary = new Summary();
+/**
+ * @deprecated use `core.summary`
+ */
+exports.markdownSummary = _summary;
+exports.summary = _summary;
+//# sourceMappingURL=summary.js.map
+
+/***/ }),
+
 /***/ 5278:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -599,28 +979,41 @@ exports.toCommandProperties = toCommandProperties;
 
 /***/ }),
 
-/***/ 3702:
-/***/ ((__unused_webpack_module, exports) => {
+/***/ 5526:
+/***/ (function(__unused_webpack_module, exports) {
 
 "use strict";
 
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.PersonalAccessTokenCredentialHandler = exports.BearerCredentialHandler = exports.BasicCredentialHandler = void 0;
 class BasicCredentialHandler {
     constructor(username, password) {
         this.username = username;
         this.password = password;
     }
     prepareRequest(options) {
-        options.headers['Authorization'] =
-            'Basic ' +
-                Buffer.from(this.username + ':' + this.password).toString('base64');
+        if (!options.headers) {
+            throw Error('The request has no headers');
+        }
+        options.headers['Authorization'] = `Basic ${Buffer.from(`${this.username}:${this.password}`).toString('base64')}`;
     }
     // This handler cannot handle 401
-    canHandleAuthentication(response) {
+    canHandleAuthentication() {
         return false;
     }
-    handleAuthentication(httpClient, requestInfo, objs) {
-        return null;
+    handleAuthentication() {
+        return __awaiter(this, void 0, void 0, function* () {
+            throw new Error('not implemented');
+        });
     }
 }
 exports.BasicCredentialHandler = BasicCredentialHandler;
@@ -631,14 +1024,19 @@ class BearerCredentialHandler {
     // currently implements pre-authorization
     // TODO: support preAuth = false where it hooks on 401
     prepareRequest(options) {
-        options.headers['Authorization'] = 'Bearer ' + this.token;
+        if (!options.headers) {
+            throw Error('The request has no headers');
+        }
+        options.headers['Authorization'] = `Bearer ${this.token}`;
     }
     // This handler cannot handle 401
-    canHandleAuthentication(response) {
+    canHandleAuthentication() {
         return false;
     }
-    handleAuthentication(httpClient, requestInfo, objs) {
-        return null;
+    handleAuthentication() {
+        return __awaiter(this, void 0, void 0, function* () {
+            throw new Error('not implemented');
+        });
     }
 }
 exports.BearerCredentialHandler = BearerCredentialHandler;
@@ -649,32 +1047,66 @@ class PersonalAccessTokenCredentialHandler {
     // currently implements pre-authorization
     // TODO: support preAuth = false where it hooks on 401
     prepareRequest(options) {
-        options.headers['Authorization'] =
-            'Basic ' + Buffer.from('PAT:' + this.token).toString('base64');
+        if (!options.headers) {
+            throw Error('The request has no headers');
+        }
+        options.headers['Authorization'] = `Basic ${Buffer.from(`PAT:${this.token}`).toString('base64')}`;
     }
     // This handler cannot handle 401
-    canHandleAuthentication(response) {
+    canHandleAuthentication() {
         return false;
     }
-    handleAuthentication(httpClient, requestInfo, objs) {
-        return null;
+    handleAuthentication() {
+        return __awaiter(this, void 0, void 0, function* () {
+            throw new Error('not implemented');
+        });
     }
 }
 exports.PersonalAccessTokenCredentialHandler = PersonalAccessTokenCredentialHandler;
-
+//# sourceMappingURL=auth.js.map
 
 /***/ }),
 
-/***/ 9925:
-/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+/***/ 6255:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const http = __nccwpck_require__(8605);
-const https = __nccwpck_require__(7211);
-const pm = __nccwpck_require__(6443);
-let tunnel;
+exports.HttpClient = exports.isHttps = exports.HttpClientResponse = exports.HttpClientError = exports.getProxyUrl = exports.MediaTypes = exports.Headers = exports.HttpCodes = void 0;
+const http = __importStar(__nccwpck_require__(3685));
+const https = __importStar(__nccwpck_require__(5687));
+const pm = __importStar(__nccwpck_require__(9835));
+const tunnel = __importStar(__nccwpck_require__(4294));
 var HttpCodes;
 (function (HttpCodes) {
     HttpCodes[HttpCodes["OK"] = 200] = "OK";
@@ -719,7 +1151,7 @@ var MediaTypes;
  * @param serverUrl  The server URL where the request will be sent. For example, https://api.github.com
  */
 function getProxyUrl(serverUrl) {
-    let proxyUrl = pm.getProxyUrl(new URL(serverUrl));
+    const proxyUrl = pm.getProxyUrl(new URL(serverUrl));
     return proxyUrl ? proxyUrl.href : '';
 }
 exports.getProxyUrl = getProxyUrl;
@@ -752,20 +1184,22 @@ class HttpClientResponse {
         this.message = message;
     }
     readBody() {
-        return new Promise(async (resolve, reject) => {
-            let output = Buffer.alloc(0);
-            this.message.on('data', (chunk) => {
-                output = Buffer.concat([output, chunk]);
-            });
-            this.message.on('end', () => {
-                resolve(output.toString());
-            });
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
+                let output = Buffer.alloc(0);
+                this.message.on('data', (chunk) => {
+                    output = Buffer.concat([output, chunk]);
+                });
+                this.message.on('end', () => {
+                    resolve(output.toString());
+                });
+            }));
         });
     }
 }
 exports.HttpClientResponse = HttpClientResponse;
 function isHttps(requestUrl) {
-    let parsedUrl = new URL(requestUrl);
+    const parsedUrl = new URL(requestUrl);
     return parsedUrl.protocol === 'https:';
 }
 exports.isHttps = isHttps;
@@ -808,141 +1242,169 @@ class HttpClient {
         }
     }
     options(requestUrl, additionalHeaders) {
-        return this.request('OPTIONS', requestUrl, null, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('OPTIONS', requestUrl, null, additionalHeaders || {});
+        });
     }
     get(requestUrl, additionalHeaders) {
-        return this.request('GET', requestUrl, null, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('GET', requestUrl, null, additionalHeaders || {});
+        });
     }
     del(requestUrl, additionalHeaders) {
-        return this.request('DELETE', requestUrl, null, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('DELETE', requestUrl, null, additionalHeaders || {});
+        });
     }
     post(requestUrl, data, additionalHeaders) {
-        return this.request('POST', requestUrl, data, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('POST', requestUrl, data, additionalHeaders || {});
+        });
     }
     patch(requestUrl, data, additionalHeaders) {
-        return this.request('PATCH', requestUrl, data, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('PATCH', requestUrl, data, additionalHeaders || {});
+        });
     }
     put(requestUrl, data, additionalHeaders) {
-        return this.request('PUT', requestUrl, data, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('PUT', requestUrl, data, additionalHeaders || {});
+        });
     }
     head(requestUrl, additionalHeaders) {
-        return this.request('HEAD', requestUrl, null, additionalHeaders || {});
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request('HEAD', requestUrl, null, additionalHeaders || {});
+        });
     }
     sendStream(verb, requestUrl, stream, additionalHeaders) {
-        return this.request(verb, requestUrl, stream, additionalHeaders);
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.request(verb, requestUrl, stream, additionalHeaders);
+        });
     }
     /**
      * Gets a typed object from an endpoint
      * Be aware that not found returns a null.  Other errors (4xx, 5xx) reject the promise
      */
-    async getJson(requestUrl, additionalHeaders = {}) {
-        additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-        let res = await this.get(requestUrl, additionalHeaders);
-        return this._processResponse(res, this.requestOptions);
+    getJson(requestUrl, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            const res = yield this.get(requestUrl, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
     }
-    async postJson(requestUrl, obj, additionalHeaders = {}) {
-        let data = JSON.stringify(obj, null, 2);
-        additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-        additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
-        let res = await this.post(requestUrl, data, additionalHeaders);
-        return this._processResponse(res, this.requestOptions);
+    postJson(requestUrl, obj, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = JSON.stringify(obj, null, 2);
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
+            const res = yield this.post(requestUrl, data, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
     }
-    async putJson(requestUrl, obj, additionalHeaders = {}) {
-        let data = JSON.stringify(obj, null, 2);
-        additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-        additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
-        let res = await this.put(requestUrl, data, additionalHeaders);
-        return this._processResponse(res, this.requestOptions);
+    putJson(requestUrl, obj, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = JSON.stringify(obj, null, 2);
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
+            const res = yield this.put(requestUrl, data, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
     }
-    async patchJson(requestUrl, obj, additionalHeaders = {}) {
-        let data = JSON.stringify(obj, null, 2);
-        additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
-        additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
-        let res = await this.patch(requestUrl, data, additionalHeaders);
-        return this._processResponse(res, this.requestOptions);
+    patchJson(requestUrl, obj, additionalHeaders = {}) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const data = JSON.stringify(obj, null, 2);
+            additionalHeaders[Headers.Accept] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.Accept, MediaTypes.ApplicationJson);
+            additionalHeaders[Headers.ContentType] = this._getExistingOrDefaultHeader(additionalHeaders, Headers.ContentType, MediaTypes.ApplicationJson);
+            const res = yield this.patch(requestUrl, data, additionalHeaders);
+            return this._processResponse(res, this.requestOptions);
+        });
     }
     /**
      * Makes a raw http request.
      * All other methods such as get, post, patch, and request ultimately call this.
      * Prefer get, del, post and patch
      */
-    async request(verb, requestUrl, data, headers) {
-        if (this._disposed) {
-            throw new Error('Client has already been disposed.');
-        }
-        let parsedUrl = new URL(requestUrl);
-        let info = this._prepareRequest(verb, parsedUrl, headers);
-        // Only perform retries on reads since writes may not be idempotent.
-        let maxTries = this._allowRetries && RetryableHttpVerbs.indexOf(verb) != -1
-            ? this._maxRetries + 1
-            : 1;
-        let numTries = 0;
-        let response;
-        while (numTries < maxTries) {
-            response = await this.requestRaw(info, data);
-            // Check if it's an authentication challenge
-            if (response &&
-                response.message &&
-                response.message.statusCode === HttpCodes.Unauthorized) {
-                let authenticationHandler;
-                for (let i = 0; i < this.handlers.length; i++) {
-                    if (this.handlers[i].canHandleAuthentication(response)) {
-                        authenticationHandler = this.handlers[i];
-                        break;
-                    }
-                }
-                if (authenticationHandler) {
-                    return authenticationHandler.handleAuthentication(this, info, data);
-                }
-                else {
-                    // We have received an unauthorized response but have no handlers to handle it.
-                    // Let the response return to the caller.
-                    return response;
-                }
+    request(verb, requestUrl, data, headers) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._disposed) {
+                throw new Error('Client has already been disposed.');
             }
-            let redirectsRemaining = this._maxRedirects;
-            while (HttpRedirectCodes.indexOf(response.message.statusCode) != -1 &&
-                this._allowRedirects &&
-                redirectsRemaining > 0) {
-                const redirectUrl = response.message.headers['location'];
-                if (!redirectUrl) {
-                    // if there's no location to redirect to, we won't
-                    break;
-                }
-                let parsedRedirectUrl = new URL(redirectUrl);
-                if (parsedUrl.protocol == 'https:' &&
-                    parsedUrl.protocol != parsedRedirectUrl.protocol &&
-                    !this._allowRedirectDowngrade) {
-                    throw new Error('Redirect from HTTPS to HTTP protocol. This downgrade is not allowed for security reasons. If you want to allow this behavior, set the allowRedirectDowngrade option to true.');
-                }
-                // we need to finish reading the response before reassigning response
-                // which will leak the open socket.
-                await response.readBody();
-                // strip authorization header if redirected to a different hostname
-                if (parsedRedirectUrl.hostname !== parsedUrl.hostname) {
-                    for (let header in headers) {
-                        // header names are case insensitive
-                        if (header.toLowerCase() === 'authorization') {
-                            delete headers[header];
+            const parsedUrl = new URL(requestUrl);
+            let info = this._prepareRequest(verb, parsedUrl, headers);
+            // Only perform retries on reads since writes may not be idempotent.
+            const maxTries = this._allowRetries && RetryableHttpVerbs.includes(verb)
+                ? this._maxRetries + 1
+                : 1;
+            let numTries = 0;
+            let response;
+            do {
+                response = yield this.requestRaw(info, data);
+                // Check if it's an authentication challenge
+                if (response &&
+                    response.message &&
+                    response.message.statusCode === HttpCodes.Unauthorized) {
+                    let authenticationHandler;
+                    for (const handler of this.handlers) {
+                        if (handler.canHandleAuthentication(response)) {
+                            authenticationHandler = handler;
+                            break;
                         }
                     }
+                    if (authenticationHandler) {
+                        return authenticationHandler.handleAuthentication(this, info, data);
+                    }
+                    else {
+                        // We have received an unauthorized response but have no handlers to handle it.
+                        // Let the response return to the caller.
+                        return response;
+                    }
                 }
-                // let's make the request with the new redirectUrl
-                info = this._prepareRequest(verb, parsedRedirectUrl, headers);
-                response = await this.requestRaw(info, data);
-                redirectsRemaining--;
-            }
-            if (HttpResponseRetryCodes.indexOf(response.message.statusCode) == -1) {
-                // If not a retry code, return immediately instead of retrying
-                return response;
-            }
-            numTries += 1;
-            if (numTries < maxTries) {
-                await response.readBody();
-                await this._performExponentialBackoff(numTries);
-            }
-        }
-        return response;
+                let redirectsRemaining = this._maxRedirects;
+                while (response.message.statusCode &&
+                    HttpRedirectCodes.includes(response.message.statusCode) &&
+                    this._allowRedirects &&
+                    redirectsRemaining > 0) {
+                    const redirectUrl = response.message.headers['location'];
+                    if (!redirectUrl) {
+                        // if there's no location to redirect to, we won't
+                        break;
+                    }
+                    const parsedRedirectUrl = new URL(redirectUrl);
+                    if (parsedUrl.protocol === 'https:' &&
+                        parsedUrl.protocol !== parsedRedirectUrl.protocol &&
+                        !this._allowRedirectDowngrade) {
+                        throw new Error('Redirect from HTTPS to HTTP protocol. This downgrade is not allowed for security reasons. If you want to allow this behavior, set the allowRedirectDowngrade option to true.');
+                    }
+                    // we need to finish reading the response before reassigning response
+                    // which will leak the open socket.
+                    yield response.readBody();
+                    // strip authorization header if redirected to a different hostname
+                    if (parsedRedirectUrl.hostname !== parsedUrl.hostname) {
+                        for (const header in headers) {
+                            // header names are case insensitive
+                            if (header.toLowerCase() === 'authorization') {
+                                delete headers[header];
+                            }
+                        }
+                    }
+                    // let's make the request with the new redirectUrl
+                    info = this._prepareRequest(verb, parsedRedirectUrl, headers);
+                    response = yield this.requestRaw(info, data);
+                    redirectsRemaining--;
+                }
+                if (!response.message.statusCode ||
+                    !HttpResponseRetryCodes.includes(response.message.statusCode)) {
+                    // If not a retry code, return immediately instead of retrying
+                    return response;
+                }
+                numTries += 1;
+                if (numTries < maxTries) {
+                    yield response.readBody();
+                    yield this._performExponentialBackoff(numTries);
+                }
+            } while (numTries < maxTries);
+            return response;
+        });
     }
     /**
      * Needs to be called if keepAlive is set to true in request options.
@@ -959,14 +1421,22 @@ class HttpClient {
      * @param data
      */
     requestRaw(info, data) {
-        return new Promise((resolve, reject) => {
-            let callbackForResult = function (err, res) {
-                if (err) {
-                    reject(err);
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                function callbackForResult(err, res) {
+                    if (err) {
+                        reject(err);
+                    }
+                    else if (!res) {
+                        // If `err` is not passed, then `res` must be passed.
+                        reject(new Error('Unknown error'));
+                    }
+                    else {
+                        resolve(res);
+                    }
                 }
-                resolve(res);
-            };
-            this.requestRawWithCallback(info, data, callbackForResult);
+                this.requestRawWithCallback(info, data, callbackForResult);
+            });
         });
     }
     /**
@@ -976,21 +1446,24 @@ class HttpClient {
      * @param onResult
      */
     requestRawWithCallback(info, data, onResult) {
-        let socket;
         if (typeof data === 'string') {
+            if (!info.options.headers) {
+                info.options.headers = {};
+            }
             info.options.headers['Content-Length'] = Buffer.byteLength(data, 'utf8');
         }
         let callbackCalled = false;
-        let handleResult = (err, res) => {
+        function handleResult(err, res) {
             if (!callbackCalled) {
                 callbackCalled = true;
                 onResult(err, res);
             }
-        };
-        let req = info.httpModule.request(info.options, (msg) => {
-            let res = new HttpClientResponse(msg);
-            handleResult(null, res);
+        }
+        const req = info.httpModule.request(info.options, (msg) => {
+            const res = new HttpClientResponse(msg);
+            handleResult(undefined, res);
         });
+        let socket;
         req.on('socket', sock => {
             socket = sock;
         });
@@ -999,12 +1472,12 @@ class HttpClient {
             if (socket) {
                 socket.end();
             }
-            handleResult(new Error('Request timeout: ' + info.options.path), null);
+            handleResult(new Error(`Request timeout: ${info.options.path}`));
         });
         req.on('error', function (err) {
             // err has statusCode property
             // res should have headers
-            handleResult(err, null);
+            handleResult(err);
         });
         if (data && typeof data === 'string') {
             req.write(data, 'utf8');
@@ -1025,7 +1498,7 @@ class HttpClient {
      * @param serverUrl  The server URL where the request will be sent. For example, https://api.github.com
      */
     getAgent(serverUrl) {
-        let parsedUrl = new URL(serverUrl);
+        const parsedUrl = new URL(serverUrl);
         return this._getAgent(parsedUrl);
     }
     _prepareRequest(method, requestUrl, headers) {
@@ -1049,21 +1522,19 @@ class HttpClient {
         info.options.agent = this._getAgent(info.parsedUrl);
         // gives handlers an opportunity to participate
         if (this.handlers) {
-            this.handlers.forEach(handler => {
+            for (const handler of this.handlers) {
                 handler.prepareRequest(info.options);
-            });
+            }
         }
         return info;
     }
     _mergeHeaders(headers) {
-        const lowercaseKeys = obj => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {});
         if (this.requestOptions && this.requestOptions.headers) {
-            return Object.assign({}, lowercaseKeys(this.requestOptions.headers), lowercaseKeys(headers));
+            return Object.assign({}, lowercaseKeys(this.requestOptions.headers), lowercaseKeys(headers || {}));
         }
         return lowercaseKeys(headers || {});
     }
     _getExistingOrDefaultHeader(additionalHeaders, header, _default) {
-        const lowercaseKeys = obj => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {});
         let clientHeader;
         if (this.requestOptions && this.requestOptions.headers) {
             clientHeader = lowercaseKeys(this.requestOptions.headers)[header];
@@ -1072,8 +1543,8 @@ class HttpClient {
     }
     _getAgent(parsedUrl) {
         let agent;
-        let proxyUrl = pm.getProxyUrl(parsedUrl);
-        let useProxy = proxyUrl && proxyUrl.hostname;
+        const proxyUrl = pm.getProxyUrl(parsedUrl);
+        const useProxy = proxyUrl && proxyUrl.hostname;
         if (this._keepAlive && useProxy) {
             agent = this._proxyAgent;
         }
@@ -1081,29 +1552,22 @@ class HttpClient {
             agent = this._agent;
         }
         // if agent is already assigned use that agent.
-        if (!!agent) {
+        if (agent) {
             return agent;
         }
         const usingSsl = parsedUrl.protocol === 'https:';
         let maxSockets = 100;
-        if (!!this.requestOptions) {
+        if (this.requestOptions) {
             maxSockets = this.requestOptions.maxSockets || http.globalAgent.maxSockets;
         }
-        if (useProxy) {
-            // If using proxy, need tunnel
-            if (!tunnel) {
-                tunnel = __nccwpck_require__(4294);
-            }
+        // This is `useProxy` again, but we need to check `proxyURl` directly for TypeScripts's flow analysis.
+        if (proxyUrl && proxyUrl.hostname) {
             const agentOptions = {
-                maxSockets: maxSockets,
+                maxSockets,
                 keepAlive: this._keepAlive,
-                proxy: {
-                    ...((proxyUrl.username || proxyUrl.password) && {
-                        proxyAuth: `${proxyUrl.username}:${proxyUrl.password}`
-                    }),
-                    host: proxyUrl.hostname,
-                    port: proxyUrl.port
-                }
+                proxy: Object.assign(Object.assign({}, ((proxyUrl.username || proxyUrl.password) && {
+                    proxyAuth: `${proxyUrl.username}:${proxyUrl.password}`
+                })), { host: proxyUrl.hostname, port: proxyUrl.port })
             };
             let tunnelAgent;
             const overHttps = proxyUrl.protocol === 'https:';
@@ -1118,7 +1582,7 @@ class HttpClient {
         }
         // if reusing agent across request and tunneling agent isn't assigned create a new agent
         if (this._keepAlive && !agent) {
-            const options = { keepAlive: this._keepAlive, maxSockets: maxSockets };
+            const options = { keepAlive: this._keepAlive, maxSockets };
             agent = usingSsl ? new https.Agent(options) : new http.Agent(options);
             this._agent = agent;
         }
@@ -1137,109 +1601,117 @@ class HttpClient {
         return agent;
     }
     _performExponentialBackoff(retryNumber) {
-        retryNumber = Math.min(ExponentialBackoffCeiling, retryNumber);
-        const ms = ExponentialBackoffTimeSlice * Math.pow(2, retryNumber);
-        return new Promise(resolve => setTimeout(() => resolve(), ms));
+        return __awaiter(this, void 0, void 0, function* () {
+            retryNumber = Math.min(ExponentialBackoffCeiling, retryNumber);
+            const ms = ExponentialBackoffTimeSlice * Math.pow(2, retryNumber);
+            return new Promise(resolve => setTimeout(() => resolve(), ms));
+        });
     }
-    static dateTimeDeserializer(key, value) {
-        if (typeof value === 'string') {
-            let a = new Date(value);
-            if (!isNaN(a.valueOf())) {
-                return a;
-            }
-        }
-        return value;
-    }
-    async _processResponse(res, options) {
-        return new Promise(async (resolve, reject) => {
-            const statusCode = res.message.statusCode;
-            const response = {
-                statusCode: statusCode,
-                result: null,
-                headers: {}
-            };
-            // not found leads to null obj returned
-            if (statusCode == HttpCodes.NotFound) {
-                resolve(response);
-            }
-            let obj;
-            let contents;
-            // get the result from the body
-            try {
-                contents = await res.readBody();
-                if (contents && contents.length > 0) {
-                    if (options && options.deserializeDates) {
-                        obj = JSON.parse(contents, HttpClient.dateTimeDeserializer);
+    _processResponse(res, options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                const statusCode = res.message.statusCode || 0;
+                const response = {
+                    statusCode,
+                    result: null,
+                    headers: {}
+                };
+                // not found leads to null obj returned
+                if (statusCode === HttpCodes.NotFound) {
+                    resolve(response);
+                }
+                // get the result from the body
+                function dateTimeDeserializer(key, value) {
+                    if (typeof value === 'string') {
+                        const a = new Date(value);
+                        if (!isNaN(a.valueOf())) {
+                            return a;
+                        }
+                    }
+                    return value;
+                }
+                let obj;
+                let contents;
+                try {
+                    contents = yield res.readBody();
+                    if (contents && contents.length > 0) {
+                        if (options && options.deserializeDates) {
+                            obj = JSON.parse(contents, dateTimeDeserializer);
+                        }
+                        else {
+                            obj = JSON.parse(contents);
+                        }
+                        response.result = obj;
+                    }
+                    response.headers = res.message.headers;
+                }
+                catch (err) {
+                    // Invalid resource (contents not json);  leaving result obj null
+                }
+                // note that 3xx redirects are handled by the http layer.
+                if (statusCode > 299) {
+                    let msg;
+                    // if exception/error in body, attempt to get better error
+                    if (obj && obj.message) {
+                        msg = obj.message;
+                    }
+                    else if (contents && contents.length > 0) {
+                        // it may be the case that the exception is in the body message as string
+                        msg = contents;
                     }
                     else {
-                        obj = JSON.parse(contents);
+                        msg = `Failed request: (${statusCode})`;
                     }
-                    response.result = obj;
-                }
-                response.headers = res.message.headers;
-            }
-            catch (err) {
-                // Invalid resource (contents not json);  leaving result obj null
-            }
-            // note that 3xx redirects are handled by the http layer.
-            if (statusCode > 299) {
-                let msg;
-                // if exception/error in body, attempt to get better error
-                if (obj && obj.message) {
-                    msg = obj.message;
-                }
-                else if (contents && contents.length > 0) {
-                    // it may be the case that the exception is in the body message as string
-                    msg = contents;
+                    const err = new HttpClientError(msg, statusCode);
+                    err.result = response.result;
+                    reject(err);
                 }
                 else {
-                    msg = 'Failed request: (' + statusCode + ')';
+                    resolve(response);
                 }
-                let err = new HttpClientError(msg, statusCode);
-                err.result = response.result;
-                reject(err);
-            }
-            else {
-                resolve(response);
-            }
+            }));
         });
     }
 }
 exports.HttpClient = HttpClient;
-
+const lowercaseKeys = (obj) => Object.keys(obj).reduce((c, k) => ((c[k.toLowerCase()] = obj[k]), c), {});
+//# sourceMappingURL=index.js.map
 
 /***/ }),
 
-/***/ 6443:
+/***/ 9835:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.checkBypass = exports.getProxyUrl = void 0;
 function getProxyUrl(reqUrl) {
-    let usingSsl = reqUrl.protocol === 'https:';
-    let proxyUrl;
+    const usingSsl = reqUrl.protocol === 'https:';
     if (checkBypass(reqUrl)) {
-        return proxyUrl;
+        return undefined;
     }
-    let proxyVar;
-    if (usingSsl) {
-        proxyVar = process.env['https_proxy'] || process.env['HTTPS_PROXY'];
+    const proxyVar = (() => {
+        if (usingSsl) {
+            return process.env['https_proxy'] || process.env['HTTPS_PROXY'];
+        }
+        else {
+            return process.env['http_proxy'] || process.env['HTTP_PROXY'];
+        }
+    })();
+    if (proxyVar) {
+        return new URL(proxyVar);
     }
     else {
-        proxyVar = process.env['http_proxy'] || process.env['HTTP_PROXY'];
+        return undefined;
     }
-    if (proxyVar) {
-        proxyUrl = new URL(proxyVar);
-    }
-    return proxyUrl;
 }
 exports.getProxyUrl = getProxyUrl;
 function checkBypass(reqUrl) {
     if (!reqUrl.hostname) {
         return false;
     }
-    let noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
+    const noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
     if (!noProxy) {
         return false;
     }
@@ -1255,12 +1727,12 @@ function checkBypass(reqUrl) {
         reqPort = 443;
     }
     // Format the request hostname and hostname with port
-    let upperReqHosts = [reqUrl.hostname.toUpperCase()];
+    const upperReqHosts = [reqUrl.hostname.toUpperCase()];
     if (typeof reqPort === 'number') {
         upperReqHosts.push(`${upperReqHosts[0]}:${reqPort}`);
     }
     // Compare request host against noproxy
-    for (let upperNoProxyItem of noProxy
+    for (const upperNoProxyItem of noProxy
         .split(',')
         .map(x => x.trim().toUpperCase())
         .filter(x => x)) {
@@ -1271,7 +1743,7 @@ function checkBypass(reqUrl) {
     return false;
 }
 exports.checkBypass = checkBypass;
-
+//# sourceMappingURL=proxy.js.map
 
 /***/ }),
 
@@ -1348,7 +1820,7 @@ __exportStar(__nccwpck_require__(3225), exports);
 var create_filter_1 = __nccwpck_require__(5176);
 Object.defineProperty(exports, "createFilter", ({ enumerable: true, get: function () { return create_filter_1.createFilter; } }));
 // Export `filePathFilter` as a named export and the default export
-exports.default = file_path_filter_1.filePathFilter;
+exports["default"] = file_path_filter_1.filePathFilter;
 // CommonJS default export hack
 /* eslint-env commonjs */
 if ( true && typeof module.exports === "object") {
@@ -1366,7 +1838,7 @@ if ( true && typeof module.exports === "object") {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.normalize = void 0;
 const globToRegExp = __nccwpck_require__(7117);
-const path = __nccwpck_require__(5622);
+const path = __nccwpck_require__(1017);
 const util_1 = __nccwpck_require__(9735);
 /**
  * Normalizes the user-provided filter criteria. The normalized form is a `Filters` object
@@ -1589,7 +2061,7 @@ exports.asyncForEach = asyncForEach;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.readdirAsync = void 0;
-const fs = __nccwpck_require__(5747);
+const fs = __nccwpck_require__(7147);
 const directory_reader_1 = __nccwpck_require__(4918);
 const for_each_1 = __nccwpck_require__(504);
 const asyncFacade = { fs, forEach: for_each_1.asyncForEach };
@@ -1688,8 +2160,8 @@ exports.callOnce = callOnce;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DirectoryReader = void 0;
-const path = __nccwpck_require__(5622);
-const stream_1 = __nccwpck_require__(2413);
+const path = __nccwpck_require__(1017);
+const stream_1 = __nccwpck_require__(2781);
 const call_1 = __nccwpck_require__(8188);
 const normalize_options_1 = __nccwpck_require__(2977);
 const stat_1 = __nccwpck_require__(9445);
@@ -2026,7 +2498,7 @@ Object.defineProperty(exports, "readdirStream", ({ enumerable: true, get: functi
 var sync_2 = __nccwpck_require__(704);
 Object.defineProperty(exports, "readdirSync", ({ enumerable: true, get: function () { return sync_2.readdirSync; } }));
 __exportStar(__nccwpck_require__(6299), exports);
-exports.default = readdir;
+exports["default"] = readdir;
 // CommonJS default export hack
 /* eslint-env commonjs */
 if ( true && typeof module.exports === "object") {
@@ -2043,7 +2515,7 @@ if ( true && typeof module.exports === "object") {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.readdirIterator = void 0;
-const fs = __nccwpck_require__(5747);
+const fs = __nccwpck_require__(7147);
 const for_each_1 = __nccwpck_require__(504);
 const directory_reader_1 = __nccwpck_require__(4918);
 const pending_1 = __nccwpck_require__(8553);
@@ -2171,7 +2643,7 @@ exports.pending = pending;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.normalizeOptions = void 0;
 const file_path_filter_1 = __nccwpck_require__(3410);
-const path = __nccwpck_require__(5622);
+const path = __nccwpck_require__(1017);
 /**
  * Validates and normalizes the options argument
  *
@@ -2374,7 +2846,7 @@ function symlinkStat(fs, path, lstats, callback) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.readdirStream = void 0;
-const fs = __nccwpck_require__(5747);
+const fs = __nccwpck_require__(7147);
 const for_each_1 = __nccwpck_require__(504);
 const directory_reader_1 = __nccwpck_require__(4918);
 const streamFacade = { fs, forEach: for_each_1.asyncForEach };
@@ -2428,7 +2900,7 @@ exports.syncForEach = syncForEach;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.syncFS = void 0;
-const fs = __nccwpck_require__(5747);
+const fs = __nccwpck_require__(7147);
 const call_1 = __nccwpck_require__(8188);
 /**
  * Synchronous versions of `fs` methods.
@@ -2542,8 +3014,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.HashDiff = exports.fileHash = void 0;
-const fs_1 = __importDefault(__nccwpck_require__(5747));
-const crypto_1 = __importDefault(__nccwpck_require__(6417));
+const fs_1 = __importDefault(__nccwpck_require__(7147));
+const crypto_1 = __importDefault(__nccwpck_require__(6113));
 function fileHash(filename, algorithm) {
     return __awaiter(this, void 0, void 0, function* () {
         return new Promise((resolve, reject) => {
@@ -2662,7 +3134,11 @@ exports.HashDiff = HashDiff;
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -2692,9 +3168,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.deploy = void 0;
+exports.deploy = exports.getServerFiles = void 0;
 const ftp = __importStar(__nccwpck_require__(7957));
-const fs_1 = __importDefault(__nccwpck_require__(5747));
+const fs_1 = __importDefault(__nccwpck_require__(7147));
 const types_1 = __nccwpck_require__(6703);
 const HashDiff_1 = __nccwpck_require__(9946);
 const utilities_1 = __nccwpck_require__(4389);
@@ -2707,7 +3183,7 @@ function downloadFileList(client, logger, path) {
         // note: originally this was using a writable stream instead of a buffer file
         // basic-ftp doesn't seam to close the connection when using steams over some ftps connections. This appears to be dependent on the ftp server
         const tempFileNameHack = ".ftp-deploy-sync-server-state-buffer-file---delete.json";
-        yield utilities_1.retryRequest(logger, () => __awaiter(this, void 0, void 0, function* () { return yield client.downloadTo(tempFileNameHack, path); }));
+        yield (0, utilities_1.retryRequest)(logger, () => __awaiter(this, void 0, void 0, function* () { return yield client.downloadTo(tempFileNameHack, path); }));
         const fileAsString = fs_1.default.readFileSync(tempFileNameHack, { encoding: "utf-8" });
         const fileAsObject = JSON.parse(fileAsString);
         fs_1.default.unlinkSync(tempFileNameHack);
@@ -2756,20 +3232,22 @@ function connect(client, args, logger) {
 function getServerFiles(client, logger, timings, args) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            yield syncProvider_1.ensureDir(client, logger, timings, args["server-dir"]);
+            yield (0, syncProvider_1.ensureDir)(client, logger, timings, args["server-dir"]);
             if (args["dangerous-clean-slate"]) {
                 logger.all(`----------------------------------------------------------------`);
                 logger.all("🗑️ Removing all files on the server because 'dangerous-clean-slate' was set, this will make the deployment very slow...");
-                yield client.clearWorkingDir();
+                if (args["dry-run"] === false) {
+                    yield client.clearWorkingDir();
+                }
                 logger.all("Clear complete");
-                throw new Error("nope");
+                throw new Error("dangerous-clean-slate was run");
             }
             const serverFiles = yield downloadFileList(client, logger, args["state-name"]);
             logger.all(`----------------------------------------------------------------`);
             logger.all(`Last published on 📅 ${new Date(serverFiles.generatedTime).toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "numeric" })}`);
             // apply exclude options to server
             if (args.exclude.length > 0) {
-                const filteredData = serverFiles.data.filter((item) => utilities_1.applyExcludeFilter({ path: item.name, isDirectory: () => item.type === "folder" }, args.exclude));
+                const filteredData = serverFiles.data.filter((item) => (0, utilities_1.applyExcludeFilter)({ path: item.name, isDirectory: () => item.type === "folder" }, args.exclude));
                 serverFiles.data = filteredData;
             }
             return serverFiles;
@@ -2789,6 +3267,7 @@ function getServerFiles(client, logger, timings, args) {
         }
     });
 }
+exports.getServerFiles = getServerFiles;
 function deploy(args, logger, timings) {
     return __awaiter(this, void 0, void 0, function* () {
         timings.start("total");
@@ -2801,10 +3280,10 @@ function deploy(args, logger, timings) {
         logger.all(`or add a badge 🏷️ to your projects readme --> https://github.com/SamKirkland/FTP-Deploy-Action#badge`);
         logger.verbose(`Using the following excludes filters: ${JSON.stringify(args.exclude)}`);
         timings.start("hash");
-        const localFiles = yield localFiles_1.getLocalFiles(args);
+        const localFiles = yield (0, localFiles_1.getLocalFiles)(args);
         timings.stop("hash");
         createLocalState(localFiles, logger, args);
-        const client = new ftp.Client();
+        const client = new ftp.Client(args.timeout);
         global.reconnect = function () {
             return __awaiter(this, void 0, void 0, function* () {
                 timings.start("connecting");
@@ -2819,8 +3298,8 @@ function deploy(args, logger, timings) {
             timings.start("logging");
             const diffTool = new HashDiff_1.HashDiff();
             logger.standard(`----------------------------------------------------------------`);
-            logger.standard(`Local Files:\t${utilities_1.formatNumber(localFiles.data.length)}`);
-            logger.standard(`Server Files:\t${utilities_1.formatNumber(serverFiles.data.length)}`);
+            logger.standard(`Local Files:\t${(0, utilities_1.formatNumber)(localFiles.data.length)}`);
+            logger.standard(`Server Files:\t${(0, utilities_1.formatNumber)(serverFiles.data.length)}`);
             logger.standard(`----------------------------------------------------------------`);
             logger.standard(`Calculating differences between client & server`);
             logger.standard(`----------------------------------------------------------------`);
@@ -2857,14 +3336,14 @@ function deploy(args, logger, timings) {
             }
         }
         catch (error) {
-            errorHandling_1.prettyError(logger, args, error);
+            (0, errorHandling_1.prettyError)(logger, args, error);
             throw error;
         }
         finally {
             client.close();
             timings.stop("total");
         }
-        const uploadSpeed = pretty_bytes_1.default(totalBytesUploaded / (timings.getTime("upload") / 1000));
+        const uploadSpeed = (0, pretty_bytes_1.default)(totalBytesUploaded / (timings.getTime("upload") / 1000));
         // footer
         logger.all(`----------------------------------------------------------------`);
         logger.all(`Time spent hashing: ${timings.getTimeFormatted("hash")}`);
@@ -2968,7 +3447,7 @@ const HashDiff_1 = __nccwpck_require__(9946);
 const utilities_1 = __nccwpck_require__(4389);
 function getLocalFiles(args) {
     return __awaiter(this, void 0, void 0, function* () {
-        const files = yield readdir_enhanced_1.default.async(args["local-dir"], { deep: true, stats: true, sep: "/", filter: (stat) => utilities_1.applyExcludeFilter(stat, args.exclude) });
+        const files = yield readdir_enhanced_1.default.async(args["local-dir"], { deep: true, stats: true, sep: "/", filter: (stat) => (0, utilities_1.applyExcludeFilter)(stat, args.exclude) });
         const records = [];
         for (let stat of files) {
             if (stat.isDirectory()) {
@@ -2984,7 +3463,7 @@ function getLocalFiles(args) {
                     type: "file",
                     name: stat.path,
                     size: stat.size,
-                    hash: yield HashDiff_1.fileHash(args["local-dir"] + stat.path, "sha256")
+                    hash: yield (0, HashDiff_1.fileHash)(args["local-dir"] + stat.path, "sha256")
                 });
                 continue;
             }
@@ -3036,10 +3515,10 @@ exports.excludeDefaults = ["**/.git*", "**/.git*/**", "**/node_modules/**"];
  */
 function deploy(args) {
     return __awaiter(this, void 0, void 0, function* () {
-        const argsWithDefaults = utilities_1.getDefaultSettings(args);
+        const argsWithDefaults = (0, utilities_1.getDefaultSettings)(args);
         const logger = new utilities_1.Logger(argsWithDefaults["log-level"]);
         const timings = new utilities_1.Timings();
-        yield deploy_1.deploy(argsWithDefaults, logger, timings);
+        yield (0, deploy_1.deploy)(argsWithDefaults, logger, timings);
     });
 }
 exports.deploy = deploy;
@@ -3073,7 +3552,7 @@ function ensureDir(client, logger, timings, folder) {
     return __awaiter(this, void 0, void 0, function* () {
         timings.start("changingDir");
         logger.verbose(`  changing dir to ${folder}`);
-        yield utilities_1.retryRequest(logger, () => __awaiter(this, void 0, void 0, function* () { return yield client.ensureDir(folder); }));
+        yield (0, utilities_1.retryRequest)(logger, () => __awaiter(this, void 0, void 0, function* () { return yield client.ensureDir(folder); }));
         logger.verbose(`  dir changed`);
         timings.stop("changingDir");
     });
@@ -3115,7 +3594,7 @@ class FTPSyncProvider {
             }
             // navigate back to the starting folder
             for (let i = 0; i < dirCount; i++) {
-                yield utilities_1.retryRequest(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.cdup(); }));
+                yield (0, utilities_1.retryRequest)(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.cdup(); }));
             }
         });
     }
@@ -3143,7 +3622,7 @@ class FTPSyncProvider {
             this.logger.all(`removing "${filePath}"`);
             if (this.dryRun === false) {
                 try {
-                    yield utilities_1.retryRequest(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.remove(filePath); }));
+                    yield (0, utilities_1.retryRequest)(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.remove(filePath); }));
                 }
                 catch (e) {
                     // this error is common when a file was deleted on the server directly
@@ -3164,7 +3643,7 @@ class FTPSyncProvider {
             const absoluteFolderPath = "/" + (this.serverPath.startsWith("./") ? this.serverPath.replace("./", "") : this.serverPath) + folderPath;
             this.logger.all(`removing folder "${absoluteFolderPath}"`);
             if (this.dryRun === false) {
-                yield utilities_1.retryRequest(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.removeDir(absoluteFolderPath); }));
+                yield (0, utilities_1.retryRequest)(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.removeDir(absoluteFolderPath); }));
             }
             this.logger.verbose(`  completed`);
         });
@@ -3175,7 +3654,7 @@ class FTPSyncProvider {
             const typePast = type === "upload" ? "uploaded" : "replaced";
             this.logger.all(`${typePresent} "${filePath}"`);
             if (this.dryRun === false) {
-                yield utilities_1.retryRequest(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.uploadFrom(this.localPath + filePath, filePath); }));
+                yield (0, utilities_1.retryRequest)(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.uploadFrom(this.localPath + filePath, filePath); }));
             }
             this.logger.verbose(`  file ${typePast}`);
         });
@@ -3184,8 +3663,8 @@ class FTPSyncProvider {
         return __awaiter(this, void 0, void 0, function* () {
             const totalCount = diffs.delete.length + diffs.upload.length + diffs.replace.length;
             this.logger.all(`----------------------------------------------------------------`);
-            this.logger.all(`Making changes to ${totalCount} ${utilities_1.pluralize(totalCount, "file/folder", "files/folders")} to sync server state`);
-            this.logger.all(`Uploading: ${pretty_bytes_1.default(diffs.sizeUpload)} -- Deleting: ${pretty_bytes_1.default(diffs.sizeDelete)} -- Replacing: ${pretty_bytes_1.default(diffs.sizeReplace)}`);
+            this.logger.all(`Making changes to ${totalCount} ${(0, utilities_1.pluralize)(totalCount, "file/folder", "files/folders")} to sync server state`);
+            this.logger.all(`Uploading: ${(0, pretty_bytes_1.default)(diffs.sizeUpload)} -- Deleting: ${(0, pretty_bytes_1.default)(diffs.sizeDelete)} -- Replacing: ${(0, pretty_bytes_1.default)(diffs.sizeReplace)}`);
             this.logger.all(`----------------------------------------------------------------`);
             // create new folders
             for (const file of diffs.upload.filter(item => item.type === "folder")) {
@@ -3211,7 +3690,7 @@ class FTPSyncProvider {
             this.logger.all(`----------------------------------------------------------------`);
             this.logger.all(`🎉 Sync complete. Saving current server state to "${this.serverPath + this.stateName}"`);
             if (this.dryRun === false) {
-                yield utilities_1.retryRequest(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.uploadFrom(this.localPath + this.stateName, this.stateName); }));
+                yield (0, utilities_1.retryRequest)(this.logger, () => __awaiter(this, void 0, void 0, function* () { return yield this.client.uploadFrom(this.localPath + this.stateName, this.stateName); }));
             }
         });
     }
@@ -3407,7 +3886,7 @@ class Timings {
         if (timer === undefined || timer.time === null) {
             return "💣 Failed";
         }
-        return pretty_ms_1.default(timer.time, { verbose: true });
+        return (0, pretty_ms_1.default)(timer.time, { verbose: true });
     }
 }
 exports.Timings = Timings;
@@ -3441,7 +3920,7 @@ class Timer {
 }
 exports.Timer = Timer;
 function getDefaultSettings(withoutDefaults) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
     if (withoutDefaults["local-dir"] !== undefined) {
         if (!withoutDefaults["local-dir"].endsWith("/")) {
             throw new Error("local-dir should be a folder (must end with /)");
@@ -3466,6 +3945,7 @@ function getDefaultSettings(withoutDefaults) {
         "exclude": (_h = withoutDefaults.exclude) !== null && _h !== void 0 ? _h : module_1.excludeDefaults,
         "log-level": (_j = withoutDefaults["log-level"]) !== null && _j !== void 0 ? _j : "standard",
         "security": (_k = withoutDefaults.security) !== null && _k !== void 0 ? _k : "loose",
+        "timeout": (_l = withoutDefaults.timeout) !== null && _l !== void 0 ? _l : 30000,
     };
 }
 exports.getDefaultSettings = getDefaultSettings;
@@ -3474,7 +3954,7 @@ function applyExcludeFilter(stat, excludeFilters) {
     if (excludeFilters.length > 0) {
         // todo this could be a performance problem...
         const pathWithFolderSlash = stat.path + (stat.isDirectory() ? "/" : "");
-        const excludeMatch = multimatch_1.default(pathWithFolderSlash, excludeFilters, { matchBase: true, dot: true });
+        const excludeMatch = (0, multimatch_1.default)(pathWithFolderSlash, excludeFilters, { matchBase: true, dot: true });
         if (excludeMatch.length > 0) {
             return false;
         }
@@ -3623,10 +4103,10 @@ function range(a, b, str) {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Client = void 0;
-const fs_1 = __nccwpck_require__(5747);
-const path_1 = __nccwpck_require__(5622);
-const tls_1 = __nccwpck_require__(4016);
-const util_1 = __nccwpck_require__(1669);
+const fs_1 = __nccwpck_require__(7147);
+const path_1 = __nccwpck_require__(1017);
+const tls_1 = __nccwpck_require__(4404);
+const util_1 = __nccwpck_require__(3837);
 const FtpContext_1 = __nccwpck_require__(9052);
 const parseList_1 = __nccwpck_require__(2993);
 const ProgressTracker_1 = __nccwpck_require__(7170);
@@ -3636,14 +4116,14 @@ const netUtils_1 = __nccwpck_require__(6288);
 const transfer_1 = __nccwpck_require__(5803);
 const parseControlResponse_1 = __nccwpck_require__(9948);
 // Use promisify to keep the library compatible with Node 8.
-const fsReadDir = util_1.promisify(fs_1.readdir);
-const fsMkDir = util_1.promisify(fs_1.mkdir);
-const fsStat = util_1.promisify(fs_1.stat);
-const fsOpen = util_1.promisify(fs_1.open);
-const fsClose = util_1.promisify(fs_1.close);
-const fsUnlink = util_1.promisify(fs_1.unlink);
-const LIST_COMMANDS_DEFAULT = ["LIST -a", "LIST"];
-const LIST_COMMANDS_MLSD = ["MLSD", "LIST -a", "LIST"];
+const fsReadDir = (0, util_1.promisify)(fs_1.readdir);
+const fsMkDir = (0, util_1.promisify)(fs_1.mkdir);
+const fsStat = (0, util_1.promisify)(fs_1.stat);
+const fsOpen = (0, util_1.promisify)(fs_1.open);
+const fsClose = (0, util_1.promisify)(fs_1.close);
+const fsUnlink = (0, util_1.promisify)(fs_1.unlink);
+const LIST_COMMANDS_DEFAULT = () => ["LIST -a", "LIST"];
+const LIST_COMMANDS_MLSD = () => ["MLSD", "LIST -a", "LIST"];
 /**
  * High-level API to interact with an FTP server.
  */
@@ -3654,7 +4134,7 @@ class Client {
      * @param timeout  Timeout in milliseconds, use 0 for no timeout. Optional, default is 30 seconds.
      */
     constructor(timeout = 30000) {
-        this.availableListCommands = LIST_COMMANDS_DEFAULT;
+        this.availableListCommands = LIST_COMMANDS_DEFAULT();
         this.ftp = new FtpContext_1.FTPContext(timeout);
         this.prepareTransfer = this._enterFirstCompatibleMode([transfer_1.enterPassiveModeIPv6, transfer_1.enterPassiveModeIPv4]);
         this.parseList = parseList_1.parseList;
@@ -3694,7 +4174,7 @@ class Client {
             host,
             port,
             family: this.ftp.ipFamily
-        }, () => this.ftp.log(`Connected to ${netUtils_1.describeAddress(this.ftp.socket)} (${netUtils_1.describeTLS(this.ftp.socket)})`));
+        }, () => this.ftp.log(`Connected to ${(0, netUtils_1.describeAddress)(this.ftp.socket)} (${(0, netUtils_1.describeTLS)(this.ftp.socket)})`));
         return this._handleConnectResponse();
     }
     /**
@@ -3703,7 +4183,7 @@ class Client {
      */
     connectImplicitTLS(host = "localhost", port = 21, tlsOptions = {}) {
         this.ftp.reset();
-        this.ftp.socket = tls_1.connect(port, host, tlsOptions, () => this.ftp.log(`Connected to ${netUtils_1.describeAddress(this.ftp.socket)} (${netUtils_1.describeTLS(this.ftp.socket)})`));
+        this.ftp.socket = (0, tls_1.connect)(port, host, tlsOptions, () => this.ftp.log(`Connected to ${(0, netUtils_1.describeAddress)(this.ftp.socket)} (${(0, netUtils_1.describeTLS)(this.ftp.socket)})`));
         this.ftp.tlsOptions = tlsOptions;
         return this._handleConnectResponse();
     }
@@ -3716,14 +4196,13 @@ class Client {
                 // The connection has been destroyed by the FTPContext at this point.
                 task.reject(res);
             }
-            else if (parseControlResponse_1.positiveCompletion(res.code)) {
+            else if ((0, parseControlResponse_1.positiveCompletion)(res.code)) {
                 task.resolve(res);
             }
             // Reject all other codes, including 120 "Service ready in nnn minutes".
             else {
                 // Don't stay connected but don't replace the socket yet by using reset()
                 // so the user can inspect properties of this instance.
-                this.ftp.socket.destroy();
                 task.reject(new FtpContext_1.FTPError(res));
             }
         });
@@ -3764,9 +4243,9 @@ class Client {
      */
     async useTLS(options = {}, command = "AUTH TLS") {
         const ret = await this.send(command);
-        this.ftp.socket = await netUtils_1.upgradeSocket(this.ftp.socket, options);
+        this.ftp.socket = await (0, netUtils_1.upgradeSocket)(this.ftp.socket, options);
         this.ftp.tlsOptions = options; // Keep the TLS options for later data connections that should use the same options.
-        this.ftp.log(`Control socket is using: ${netUtils_1.describeTLS(this.ftp.socket)}`);
+        this.ftp.log(`Control socket is using: ${(0, netUtils_1.describeTLS)(this.ftp.socket)}`);
         return ret;
     }
     /**
@@ -3776,12 +4255,12 @@ class Client {
      * @param password  Password to use for login. Optional, default is "guest".
      */
     login(user = "anonymous", password = "guest") {
-        this.ftp.log(`Login security: ${netUtils_1.describeTLS(this.ftp.socket)}`);
+        this.ftp.log(`Login security: ${(0, netUtils_1.describeTLS)(this.ftp.socket)}`);
         return this.ftp.handle("USER " + user, (res, task) => {
             if (res instanceof Error) {
                 task.reject(res);
             }
-            else if (parseControlResponse_1.positiveCompletion(res.code)) { // User logged in proceed OR Command superfluous
+            else if ((0, parseControlResponse_1.positiveCompletion)(res.code)) { // User logged in proceed OR Command superfluous
                 task.resolve(res);
             }
             else if (res.code === 331) { // User name okay, need password
@@ -3805,10 +4284,10 @@ class Client {
         // Use MLSD directory listing if possible. See https://tools.ietf.org/html/rfc3659#section-7.8:
         // "The presence of the MLST feature indicates that both MLST and MLSD are supported."
         const supportsMLSD = features.has("MLST");
-        this.availableListCommands = supportsMLSD ? LIST_COMMANDS_MLSD : LIST_COMMANDS_DEFAULT;
+        this.availableListCommands = supportsMLSD ? LIST_COMMANDS_MLSD() : LIST_COMMANDS_DEFAULT();
         await this.send("TYPE I"); // Binary mode
         await this.sendIgnoringError("STRU F"); // Use file structure
-        await this.sendIgnoringError("OPTS UTF8 ON"); // Some servers expect UTF-8 to be enabled explicitly
+        await this.sendIgnoringError("OPTS UTF8 ON"); // Some servers expect UTF-8 to be enabled explicitly and setting before login might not have worked.
         if (supportsMLSD) {
             await this.sendIgnoringError("OPTS MLST type;size;modify;unique;unix.mode;unix.owner;unix.group;unix.ownername;unix.groupname;"); // Make sure MLSD listings include all we can parse
         }
@@ -3843,6 +4322,9 @@ class Client {
             secureOptions.host = (_b = secureOptions.host) !== null && _b !== void 0 ? _b : options.host;
             await this.useTLS(secureOptions);
         }
+        // Set UTF-8 on before login in case there are non-ascii characters in user or password.
+        // Note that this might not work before login depending on server.
+        await this.sendIgnoringError("OPTS UTF8 ON");
         await this.login(options.user, options.password);
         await this.useDefaultSettings();
         return welcome;
@@ -3871,7 +4353,7 @@ class Client {
         const res = await this.sendIgnoringError("FEAT");
         const features = new Map();
         // Not supporting any special features will be reported with a single line.
-        if (res.code < 400 && parseControlResponse_1.isMultiline(res.message)) {
+        if (res.code < 400 && (0, parseControlResponse_1.isMultiline)(res.message)) {
             // The first and last line wrap the multiline response, ignore them.
             res.message.split("\n").slice(1, -1).forEach(line => {
                 // A typical lines looks like: " REST STREAM" or " MDTM".
@@ -3903,7 +4385,7 @@ class Client {
         const validPath = await this.protectWhitespace(path);
         const res = await this.send(`MDTM ${validPath}`);
         const date = res.message.slice(4);
-        return parseListMLSD_1.parseMLSxDate(date);
+        return (0, parseListMLSD_1.parseMLSxDate)(date);
     }
     /**
      * Get the size of a file.
@@ -3940,7 +4422,10 @@ class Client {
      */
     async remove(path, ignoreErrorCodes = false) {
         const validPath = await this.protectWhitespace(path);
-        return this.send(`DELE ${validPath}`, ignoreErrorCodes);
+        if (ignoreErrorCodes) {
+            return this.sendIgnoringError(`DELE ${validPath}`);
+        }
+        return this.send(`DELE ${validPath}`);
     }
     /**
      * Report transfer progress for any upload or download to a given handler.
@@ -3987,7 +4472,7 @@ class Client {
      */
     async _uploadLocalFile(localPath, remotePath, command, options) {
         const fd = await fsOpen(localPath, "r");
-        const source = fs_1.createReadStream("", {
+        const source = (0, fs_1.createReadStream)("", {
             fd,
             start: options.localStart,
             end: options.localEndInclusive,
@@ -4011,7 +4496,7 @@ class Client {
             await this.prepareTransfer(this.ftp);
             // Keep the keyword `await` or the `finally` clause below runs too early
             // and removes the event listener for the source stream too early.
-            return await transfer_1.uploadFrom(source, {
+            return await (0, transfer_1.uploadFrom)(source, {
                 ftp: this.ftp,
                 tracker: this._progressTracker,
                 command,
@@ -4049,7 +4534,7 @@ class Client {
         const appendingToLocalFile = startAt > 0;
         const fileSystemFlags = appendingToLocalFile ? "r+" : "w";
         const fd = await fsOpen(localPath, fileSystemFlags);
-        const destination = fs_1.createWriteStream("", {
+        const destination = (0, fs_1.createWriteStream)("", {
             fd,
             start: startAt,
             autoClose: false
@@ -4081,7 +4566,7 @@ class Client {
             await this.prepareTransfer(this.ftp);
             // Keep the keyword `await` or the `finally` clause below runs too early
             // and removes the event listener for the source stream too early.
-            return await transfer_1.downloadTo(destination, {
+            return await (0, transfer_1.downloadTo)(destination, {
                 ftp: this.ftp,
                 tracker: this._progressTracker,
                 command: startAt > 0 ? `REST ${startAt}` : `RETR ${validPath}`,
@@ -4126,7 +4611,7 @@ class Client {
      */
     async _requestListWithCommand(command) {
         const buffer = new StringWriter_1.StringWriter();
-        await transfer_1.downloadTo(buffer, {
+        await (0, transfer_1.downloadTo)(buffer, {
             ftp: this.ftp,
             tracker: this._progressTracker,
             command,
@@ -4149,10 +4634,13 @@ class Client {
     async removeDir(remoteDirPath) {
         return this._exitAtCurrentDirectory(async () => {
             await this.cd(remoteDirPath);
+            // Get the absolute path of the target because remoteDirPath might be a relative path, even `../` is possible.
+            const absoluteDirPath = await this.pwd();
             await this.clearWorkingDir();
-            if (remoteDirPath !== "/") {
+            const dirIsRoot = absoluteDirPath === "/";
+            if (!dirIsRoot) {
                 await this.cdup();
-                await this.removeEmptyDir(remoteDirPath);
+                await this.removeEmptyDir(absoluteDirPath);
             }
         });
     }
@@ -4199,7 +4687,7 @@ class Client {
     async _uploadToWorkingDir(localDirPath) {
         const files = await fsReadDir(localDirPath);
         for (const file of files) {
-            const fullPath = path_1.join(localDirPath, file);
+            const fullPath = (0, path_1.join)(localDirPath, file);
             const stats = await fsStat(fullPath);
             if (stats.isFile()) {
                 await this.uploadFrom(fullPath, file);
@@ -4231,7 +4719,7 @@ class Client {
     async _downloadFromWorkingDir(localDirPath) {
         await ensureLocalDirectory(localDirPath);
         for (const file of await this.list()) {
-            const localPath = path_1.join(localDirPath, file.name);
+            const localPath = (0, path_1.join)(localDirPath, file.name);
             if (file.isDirectory) {
                 await this.cd(file.name);
                 await this._downloadFromWorkingDir(localPath);
@@ -4301,26 +4789,26 @@ class Client {
      * Try all available transfer strategies and pick the first one that works. Update `client` to
      * use the working strategy for all successive transfer requests.
      *
-     * @param transferModes
      * @returns a function that will try the provided strategies.
      */
-    _enterFirstCompatibleMode(transferModes) {
+    _enterFirstCompatibleMode(strategies) {
         return async (ftp) => {
-            ftp.log("Trying to find optimal transfer mode...");
-            for (const transferMode of transferModes) {
+            ftp.log("Trying to find optimal transfer strategy...");
+            let lastError = undefined;
+            for (const strategy of strategies) {
                 try {
-                    const res = await transferMode(ftp);
-                    ftp.log("Optimal transfer mode found.");
-                    this.prepareTransfer = transferMode; // eslint-disable-line require-atomic-updates
+                    const res = await strategy(ftp);
+                    ftp.log("Optimal transfer strategy found.");
+                    this.prepareTransfer = strategy; // eslint-disable-line require-atomic-updates
                     return res;
                 }
                 catch (err) {
                     // Try the next candidate no matter the exact error. It's possible that a server
                     // answered incorrectly to a strategy, for example a PASV answer to an EPSV.
-                    ftp.log(`Transfer mode failed: "${err.message}", will try next.`);
+                    lastError = err;
                 }
             }
-            throw new Error("None of the available transfer modes work.");
+            throw new Error(`None of the available transfer strategies work. Last error response was '${lastError}'.`);
         };
     }
     /**
@@ -4399,7 +4887,7 @@ var FileType;
     FileType[FileType["File"] = 1] = "File";
     FileType[FileType["Directory"] = 2] = "Directory";
     FileType[FileType["SymbolicLink"] = 3] = "SymbolicLink";
-})(FileType = exports.FileType || (exports.FileType = {}));
+})(FileType || (exports.FileType = FileType = {}));
 /**
  * Describes a file, directory or symbolic link.
  */
@@ -4493,7 +4981,7 @@ FileInfo.UnixPermission = {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.FTPContext = exports.FTPError = void 0;
-const net_1 = __nccwpck_require__(1631);
+const net_1 = __nccwpck_require__(1808);
 const parseControlResponse_1 = __nccwpck_require__(9948);
 /**
  * Describes an FTP server error response including the FTP response code.
@@ -4506,6 +4994,9 @@ class FTPError extends Error {
     }
 }
 exports.FTPError = FTPError;
+function doNothing() {
+    /** Do nothing */
+}
 /**
  * FTPContext holds the control and data sockets of an FTP connection and provides a
  * simplified way to interact with an FTP server, handle responses, errors and timeouts.
@@ -4558,8 +5049,8 @@ class FTPContext {
             return;
         }
         this._closingError = err;
-        // Before giving the user's task a chance to react, make sure we won't be bothered with any inputs.
-        this._closeSocket(this._socket);
+        // Close the sockets but don't fully reset this context to preserve `this._closingError`.
+        this._closeControlSocket();
         this._closeSocket(this._dataSocket);
         // Give the user's task a chance to react, maybe cleanup resources.
         this._passToHandler(err);
@@ -4591,16 +5082,17 @@ class FTPContext {
     set socket(socket) {
         // No data socket should be open in any case where the control socket is set or upgraded.
         this.dataSocket = undefined;
+        // This being a reset, reset any other state apart from the socket.
         this.tlsOptions = {};
-        // This being a soft reset, remove any remaining partial response.
         this._partialResponse = "";
         if (this._socket) {
-            // Only close the current connection if the new is not an upgrade.
-            const isUpgrade = socket.localPort === this._socket.localPort;
-            if (!isUpgrade) {
-                this._socket.destroy();
+            const newSocketUpgradesExisting = socket.localPort === this._socket.localPort;
+            if (newSocketUpgradesExisting) {
+                this._removeSocketListeners(this.socket);
             }
-            this._removeSocketListeners(this._socket);
+            else {
+                this._closeControlSocket();
+            }
         }
         if (socket) {
             // Setting a completely new control socket is in essence something like a reset. That's
@@ -4688,7 +5180,6 @@ class FTPContext {
      */
     handle(command, responseHandler) {
         if (this._task) {
-            // The user or client instance called `handle()` while a task is still running.
             const err = new Error("User launched a task while another one is still running. Forgot to use 'await' or '.then()'?");
             err.stack += `\nRunning task launched at: ${this._task.stack}`;
             this.closeWithError(err);
@@ -4696,27 +5187,25 @@ class FTPContext {
             // because the context closed already. That way, users will receive an exception where
             // they called this method by mistake.
         }
-        return new Promise((resolvePromise, rejectPromise) => {
-            const stack = new Error().stack || "Unknown call stack";
-            const resolver = {
-                resolve: (arg) => {
-                    this._stopTrackingTask();
-                    resolvePromise(arg);
-                },
-                reject: err => {
-                    this._stopTrackingTask();
-                    rejectPromise(err);
-                }
-            };
+        return new Promise((resolveTask, rejectTask) => {
             this._task = {
-                stack,
-                resolver,
-                responseHandler
+                stack: new Error().stack || "Unknown call stack",
+                responseHandler,
+                resolver: {
+                    resolve: arg => {
+                        this._stopTrackingTask();
+                        resolveTask(arg);
+                    },
+                    reject: err => {
+                        this._stopTrackingTask();
+                        rejectTask(err);
+                    }
+                }
             };
             if (this._closingError) {
                 // This client has been closed. Provide an error that describes this one as being caused
                 // by `_closingError`, include stack traces for both.
-                const err = new Error("Client is closed"); // Type 'Error' is not correctly defined, doesn't have 'code'.
+                const err = new Error(`Client is closed because ${this._closingError.message}`); // Type 'Error' is not correctly defined, doesn't have 'code'.
                 err.stack += `\nClosing reason: ${this._closingError.stack}`;
                 err.code = this._closingError.code !== undefined ? this._closingError.code : "0";
                 this._passToHandler(err);
@@ -4764,7 +5253,7 @@ class FTPContext {
         this.log(`< ${chunk}`);
         // This chunk might complete an earlier partial response.
         const completeResponse = this._partialResponse + chunk;
-        const parsed = parseControlResponse_1.parseControlResponse(completeResponse);
+        const parsed = (0, parseControlResponse_1.parseControlResponse)(completeResponse);
         // Remember any incomplete remainder.
         this._partialResponse = parsed.rest;
         // Each response group is passed along individually.
@@ -4805,16 +5294,29 @@ class FTPContext {
                 this.closeWithError(new Error(`Socket closed due to transmission error (${identifier})`));
             }
         });
-        socket.once("timeout", () => this.closeWithError(new Error(`Timeout (${identifier})`)));
+        socket.once("timeout", () => {
+            socket.destroy();
+            this.closeWithError(new Error(`Timeout (${identifier})`));
+        });
     }
     /**
-     * Close a socket.
+     * Close the control socket. Sends QUIT, then FIN, and ignores any response or error.
+     */
+    _closeControlSocket() {
+        this._removeSocketListeners(this._socket);
+        this._socket.on("error", doNothing);
+        this.send("QUIT");
+        this._closeSocket(this._socket);
+    }
+    /**
+     * Close a socket, ignores any error.
      * @protected
      */
     _closeSocket(socket) {
         if (socket) {
-            socket.destroy();
             this._removeSocketListeners(socket);
+            socket.on("error", doNothing);
+            socket.destroy();
         }
     }
     /**
@@ -4942,7 +5444,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.StringWriter = void 0;
-const stream_1 = __nccwpck_require__(2413);
+const stream_1 = __nccwpck_require__(2781);
 class StringWriter extends stream_1.Writable {
     constructor() {
         super(...arguments);
@@ -4973,7 +5475,11 @@ exports.StringWriter = StringWriter;
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -5005,7 +5511,7 @@ Object.defineProperty(exports, "enterPassiveModeIPv6", ({ enumerable: true, get:
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.ipIsPrivateV4Address = exports.upgradeSocket = exports.describeAddress = exports.describeTLS = void 0;
-const tls_1 = __nccwpck_require__(4016);
+const tls_1 = __nccwpck_require__(4404);
 /**
  * Returns a string describing the encryption on a given socket instance.
  */
@@ -5035,7 +5541,7 @@ function upgradeSocket(socket, options) {
         const tlsOptions = Object.assign({}, options, {
             socket
         });
-        const tlsSocket = tls_1.connect(tlsOptions, () => {
+        const tlsSocket = (0, tls_1.connect)(tlsOptions, () => {
             const expectCertificate = tlsOptions.rejectUnauthorized !== false;
             if (expectCertificate && !tlsSocket.authorized) {
                 reject(tlsSocket.authorizationError);
@@ -5065,7 +5571,8 @@ function ipIsPrivateV4Address(ip = "") {
     const octets = ip.split(".").map(o => parseInt(o, 10));
     return octets[0] === 10 // 10.0.0.0 - 10.255.255.255
         || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) // 172.16.0.0 - 172.31.255.255
-        || (octets[0] === 192 && octets[1] === 168); // 192.168.0.0 - 192.168.255.255
+        || (octets[0] === 192 && octets[1] === 168) // 192.168.0.0 - 192.168.255.255
+        || ip === "127.0.0.1";
 }
 exports.ipIsPrivateV4Address = ipIsPrivateV4Address;
 
@@ -5154,7 +5661,11 @@ function isNotBlank(str) {
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -5188,8 +5699,11 @@ const availableParsers = [
 function firstCompatibleParser(line, parsers) {
     return parsers.find(parser => parser.testLine(line) === true);
 }
-function stringIsNotBlank(str) {
+function isNotBlank(str) {
     return str.trim() !== "";
+}
+function isNotMeta(str) {
+    return !str.startsWith("total");
 }
 const REGEX_NEWLINE = /\r?\n/;
 /**
@@ -5198,7 +5712,8 @@ const REGEX_NEWLINE = /\r?\n/;
 function parseList(rawList) {
     const lines = rawList
         .split(REGEX_NEWLINE)
-        .filter(stringIsNotBlank);
+        .filter(isNotBlank)
+        .filter(isNotMeta);
     if (lines.length === 0) {
         return [];
     }
@@ -5293,8 +5808,8 @@ function parseSize(value, info) {
  * Parsers for MLSD facts.
  */
 const factHandlersByName = {
-    "size": parseSize,
-    "sizd": parseSize,
+    "size": parseSize, // File size
+    "sizd": parseSize, // Directory size
     "unique": (value, info) => {
         info.uniqueID = value;
     },
@@ -5317,7 +5832,7 @@ const factHandlersByName = {
         if (value.startsWith("OS.unix=slink")) {
             info.type = FileInfo_1.FileType.SymbolicLink;
             info.link = value.substr(value.indexOf(":") + 1);
-            return 1 /* Continue */;
+            return 1 /* FactHandlerResult.Continue */;
         }
         switch (value) {
             case "file":
@@ -5333,11 +5848,11 @@ const factHandlersByName = {
                 break;
             case "cdir": // Current directory being listed
             case "pdir": // Parent directory
-                return 2 /* IgnoreFile */; // Don't include these entries in the listing
+                return 2 /* FactHandlerResult.IgnoreFile */; // Don't include these entries in the listing
             default:
                 info.type = FileInfo_1.FileType.Unknown;
         }
-        return 1 /* Continue */;
+        return 1 /* FactHandlerResult.Continue */;
     },
     "unix.mode": (value, info) => {
         const digits = value.substr(-3);
@@ -5418,7 +5933,7 @@ function parseLine(line) {
             continue;
         }
         const result = factHandler(factValue, info);
-        if (result === 2 /* IgnoreFile */) {
+        if (result === 2 /* FactHandlerResult.IgnoreFile */) {
             return undefined;
         }
     }
@@ -5516,7 +6031,7 @@ const JA_YEAR = "\u5e74";
  *    {@code @}   file has extended attributes
  */
 const RE_LINE = new RegExp("([bcdelfmpSs-])" // file type
-    + "(((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-])))\\+?" // permissions
+    + "(((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]))((r|-)(w|-)([xsStTL-]?)))\\+?" // permissions
     + "\\s*" // separator TODO why allow it to be omitted??
     + "(\\d+)" // link count
     + "\\s+" // separator
@@ -5646,7 +6161,8 @@ function parseMode(r, w, x) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.downloadTo = exports.uploadFrom = exports.connectForPassiveTransfer = exports.parsePasvResponse = exports.enterPassiveModeIPv4 = exports.parseEpsvResponse = exports.enterPassiveModeIPv6 = void 0;
 const netUtils_1 = __nccwpck_require__(6288);
-const tls_1 = __nccwpck_require__(4016);
+const stream_1 = __nccwpck_require__(2781);
+const tls_1 = __nccwpck_require__(4404);
 const parseControlResponse_1 = __nccwpck_require__(9948);
 /**
  * Prepare a data socket using passive mode over IPv6.
@@ -5696,7 +6212,7 @@ async function enterPassiveModeIPv4(ftp) {
     // We can't always perform this replacement because it's possible (although unlikely) that the FTP server
     // indeed uses a different host for data connections.
     const controlHost = ftp.socket.remoteAddress;
-    if (netUtils_1.ipIsPrivateV4Address(target.host) && controlHost && !netUtils_1.ipIsPrivateV4Address(controlHost)) {
+    if ((0, netUtils_1.ipIsPrivateV4Address)(target.host) && controlHost && !(0, netUtils_1.ipIsPrivateV4Address)(controlHost)) {
         target.host = controlHost;
     }
     await connectForPassiveTransfer(target.host, target.port, ftp);
@@ -5720,15 +6236,21 @@ function parsePasvResponse(message) {
 exports.parsePasvResponse = parsePasvResponse;
 function connectForPassiveTransfer(host, port, ftp) {
     return new Promise((resolve, reject) => {
+        let socket = ftp._newSocket();
         const handleConnErr = function (err) {
             err.message = "Can't open data connection in passive mode: " + err.message;
             reject(err);
         };
-        let socket = ftp._newSocket();
+        const handleTimeout = function () {
+            socket.destroy();
+            reject(new Error(`Timeout when trying to open data connection to ${host}:${port}`));
+        };
+        socket.setTimeout(ftp.timeout);
         socket.on("error", handleConnErr);
+        socket.on("timeout", handleTimeout);
         socket.connect({ port, host, family: ftp.ipFamily }, () => {
             if (ftp.socket instanceof tls_1.TLSSocket) {
-                socket = tls_1.connect(Object.assign({}, ftp.tlsOptions, {
+                socket = (0, tls_1.connect)(Object.assign({}, ftp.tlsOptions, {
                     socket,
                     // Reuse the TLS session negotiated earlier when the control connection
                     // was upgraded. Servers expect this because it provides additional
@@ -5747,6 +6269,7 @@ function connectForPassiveTransfer(host, port, ftp) {
             }
             // Let the FTPContext listen to errors from now on, remove local handler.
             socket.removeListener("error", handleConnErr);
+            socket.removeListener("timeout", handleTimeout);
             ftp.dataSocket = socket;
             resolve();
         });
@@ -5856,18 +6379,22 @@ function uploadFrom(source, config) {
             // 'secureConnect'. If this hasn't happened yet, getCipher() returns undefined.
             const canUpload = "getCipher" in dataSocket ? dataSocket.getCipher() !== undefined : true;
             onConditionOrEvent(canUpload, dataSocket, "secureConnect", () => {
-                config.ftp.log(`Uploading to ${netUtils_1.describeAddress(dataSocket)} (${netUtils_1.describeTLS(dataSocket)})`);
+                config.ftp.log(`Uploading to ${(0, netUtils_1.describeAddress)(dataSocket)} (${(0, netUtils_1.describeTLS)(dataSocket)})`);
                 resolver.onDataStart(config.remotePath, config.type);
-                source.pipe(dataSocket).once("finish", () => {
-                    dataSocket.destroy(); // Explicitly close/destroy the socket to signal the end.
-                    resolver.onDataDone(task);
+                (0, stream_1.pipeline)(source, dataSocket, err => {
+                    if (err) {
+                        resolver.onError(task, err);
+                    }
+                    else {
+                        resolver.onDataDone(task);
+                    }
                 });
             });
         }
-        else if (parseControlResponse_1.positiveCompletion(res.code)) { // Transfer complete
+        else if ((0, parseControlResponse_1.positiveCompletion)(res.code)) { // Transfer complete
             resolver.onControlDone(task, res);
         }
-        else if (parseControlResponse_1.positiveIntermediate(res.code)) {
+        else if ((0, parseControlResponse_1.positiveIntermediate)(res.code)) {
             resolver.onUnexpectedRequest(res);
         }
         // Ignore all other positive preliminary response codes (< 200)
@@ -5878,9 +6405,6 @@ function downloadTo(destination, config) {
     if (!config.ftp.dataSocket) {
         throw new Error("Download will be initiated but no data connection is available.");
     }
-    // It's possible that data transmission begins before the control socket
-    // receives the announcement. Start listening for data immediately.
-    config.ftp.dataSocket.pipe(destination);
     const resolver = new TransferResolver(config.ftp, config.tracker);
     return config.ftp.handle(config.command, (res, task) => {
         if (res instanceof Error) {
@@ -5892,17 +6416,24 @@ function downloadTo(destination, config) {
                 resolver.onError(task, new Error("Download should begin but no data connection is available."));
                 return;
             }
-            config.ftp.log(`Downloading from ${netUtils_1.describeAddress(dataSocket)} (${netUtils_1.describeTLS(dataSocket)})`);
+            config.ftp.log(`Downloading from ${(0, netUtils_1.describeAddress)(dataSocket)} (${(0, netUtils_1.describeTLS)(dataSocket)})`);
             resolver.onDataStart(config.remotePath, config.type);
-            onConditionOrEvent(isWritableFinished(destination), destination, "finish", () => resolver.onDataDone(task));
+            (0, stream_1.pipeline)(dataSocket, destination, err => {
+                if (err) {
+                    resolver.onError(task, err);
+                }
+                else {
+                    resolver.onDataDone(task);
+                }
+            });
         }
         else if (res.code === 350) { // Restarting at startAt.
             config.ftp.send("RETR " + config.remotePath);
         }
-        else if (parseControlResponse_1.positiveCompletion(res.code)) { // Transfer complete
+        else if ((0, parseControlResponse_1.positiveCompletion)(res.code)) { // Transfer complete
             resolver.onControlDone(task, res);
         }
-        else if (parseControlResponse_1.positiveIntermediate(res.code)) {
+        else if ((0, parseControlResponse_1.positiveIntermediate)(res.code)) {
             resolver.onUnexpectedRequest(res);
         }
         // Ignore all other positive preliminary response codes (< 200)
@@ -5925,18 +6456,6 @@ function onConditionOrEvent(condition, emitter, eventName, action) {
     else {
         emitter.once(eventName, () => action());
     }
-}
-/**
- * Detect whether a writable stream is finished, supporting Node 8.
- * From https://github.com/nodejs/node/blob/3e2a3007107b7a100794f4e4adbde19263fc7464/lib/internal/streams/end-of-stream.js#L28-L33
- */
-function isWritableFinished(stream) {
-    if (stream.writableFinished)
-        return true;
-    const wState = stream._writableState;
-    if (!wState || wState.errored)
-        return false;
-    return wState.finished || (wState.ended && wState.length === 0);
 }
 
 
@@ -6313,10 +6832,10 @@ module.exports = function (glob, opts) {
 module.exports = minimatch
 minimatch.Minimatch = Minimatch
 
-var path = { sep: '/' }
-try {
-  path = __nccwpck_require__(5622)
-} catch (er) {}
+var path = (function () { try { return __nccwpck_require__(1017) } catch (e) {}}()) || {
+  sep: '/'
+}
+minimatch.sep = path.sep
 
 var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {}
 var expand = __nccwpck_require__(3717)
@@ -6368,43 +6887,64 @@ function filter (pattern, options) {
 }
 
 function ext (a, b) {
-  a = a || {}
   b = b || {}
   var t = {}
-  Object.keys(b).forEach(function (k) {
-    t[k] = b[k]
-  })
   Object.keys(a).forEach(function (k) {
     t[k] = a[k]
+  })
+  Object.keys(b).forEach(function (k) {
+    t[k] = b[k]
   })
   return t
 }
 
 minimatch.defaults = function (def) {
-  if (!def || !Object.keys(def).length) return minimatch
+  if (!def || typeof def !== 'object' || !Object.keys(def).length) {
+    return minimatch
+  }
 
   var orig = minimatch
 
   var m = function minimatch (p, pattern, options) {
-    return orig.minimatch(p, pattern, ext(def, options))
+    return orig(p, pattern, ext(def, options))
   }
 
   m.Minimatch = function Minimatch (pattern, options) {
     return new orig.Minimatch(pattern, ext(def, options))
+  }
+  m.Minimatch.defaults = function defaults (options) {
+    return orig.defaults(ext(def, options)).Minimatch
+  }
+
+  m.filter = function filter (pattern, options) {
+    return orig.filter(pattern, ext(def, options))
+  }
+
+  m.defaults = function defaults (options) {
+    return orig.defaults(ext(def, options))
+  }
+
+  m.makeRe = function makeRe (pattern, options) {
+    return orig.makeRe(pattern, ext(def, options))
+  }
+
+  m.braceExpand = function braceExpand (pattern, options) {
+    return orig.braceExpand(pattern, ext(def, options))
+  }
+
+  m.match = function (list, pattern, options) {
+    return orig.match(list, pattern, ext(def, options))
   }
 
   return m
 }
 
 Minimatch.defaults = function (def) {
-  if (!def || !Object.keys(def).length) return Minimatch
   return minimatch.defaults(def).Minimatch
 }
 
 function minimatch (p, pattern, options) {
-  if (typeof pattern !== 'string') {
-    throw new TypeError('glob pattern string required')
-  }
+  assertValidPattern(pattern)
 
   if (!options) options = {}
 
@@ -6412,9 +6952,6 @@ function minimatch (p, pattern, options) {
   if (!options.nocomment && pattern.charAt(0) === '#') {
     return false
   }
-
-  // "" only matches ""
-  if (pattern.trim() === '') return p === ''
 
   return new Minimatch(pattern, options).match(p)
 }
@@ -6424,15 +6961,14 @@ function Minimatch (pattern, options) {
     return new Minimatch(pattern, options)
   }
 
-  if (typeof pattern !== 'string') {
-    throw new TypeError('glob pattern string required')
-  }
+  assertValidPattern(pattern)
 
   if (!options) options = {}
+
   pattern = pattern.trim()
 
   // windows support: need to use /, not \
-  if (path.sep !== '/') {
+  if (!options.allowWindowsEscape && path.sep !== '/') {
     pattern = pattern.split(path.sep).join('/')
   }
 
@@ -6443,6 +6979,7 @@ function Minimatch (pattern, options) {
   this.negate = false
   this.comment = false
   this.empty = false
+  this.partial = !!options.partial
 
   // make the set of regexps etc.
   this.make()
@@ -6452,9 +6989,6 @@ Minimatch.prototype.debug = function () {}
 
 Minimatch.prototype.make = make
 function make () {
-  // don't do it more than once.
-  if (this._made) return
-
   var pattern = this.pattern
   var options = this.options
 
@@ -6474,7 +7008,7 @@ function make () {
   // step 2: expand braces
   var set = this.globSet = this.braceExpand()
 
-  if (options.debug) this.debug = console.error
+  if (options.debug) this.debug = function debug() { console.error.apply(console, arguments) }
 
   this.debug(this.pattern, set)
 
@@ -6554,17 +7088,27 @@ function braceExpand (pattern, options) {
   pattern = typeof pattern === 'undefined'
     ? this.pattern : pattern
 
-  if (typeof pattern === 'undefined') {
-    throw new TypeError('undefined pattern')
-  }
+  assertValidPattern(pattern)
 
-  if (options.nobrace ||
-    !pattern.match(/\{.*\}/)) {
+  // Thanks to Yeting Li <https://github.com/yetingli> for
+  // improving this regexp to avoid a ReDOS vulnerability.
+  if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) {
     // shortcut. no need to expand.
     return [pattern]
   }
 
   return expand(pattern)
+}
+
+var MAX_PATTERN_LENGTH = 1024 * 64
+var assertValidPattern = function (pattern) {
+  if (typeof pattern !== 'string') {
+    throw new TypeError('invalid pattern')
+  }
+
+  if (pattern.length > MAX_PATTERN_LENGTH) {
+    throw new TypeError('pattern is too long')
+  }
 }
 
 // parse a component of the expanded set.
@@ -6581,14 +7125,17 @@ function braceExpand (pattern, options) {
 Minimatch.prototype.parse = parse
 var SUBPARSE = {}
 function parse (pattern, isSub) {
-  if (pattern.length > 1024 * 64) {
-    throw new TypeError('pattern is too long')
-  }
+  assertValidPattern(pattern)
 
   var options = this.options
 
   // shortcuts
-  if (!options.noglobstar && pattern === '**') return GLOBSTAR
+  if (pattern === '**') {
+    if (!options.noglobstar)
+      return GLOBSTAR
+    else
+      pattern = '*'
+  }
   if (pattern === '') return ''
 
   var re = ''
@@ -6644,10 +7191,12 @@ function parse (pattern, isSub) {
     }
 
     switch (c) {
-      case '/':
+      /* istanbul ignore next */
+      case '/': {
         // completely not allowed, even escaped.
         // Should already be path-split by now.
         return false
+      }
 
       case '\\':
         clearStateChar()
@@ -6766,25 +7315,23 @@ function parse (pattern, isSub) {
 
         // handle the case where we left a class open.
         // "[z-a]" is valid, equivalent to "\[z-a\]"
-        if (inClass) {
-          // split where the last [ was, make sure we don't have
-          // an invalid re. if so, re-walk the contents of the
-          // would-be class to re-translate any characters that
-          // were passed through as-is
-          // TODO: It would probably be faster to determine this
-          // without a try/catch and a new RegExp, but it's tricky
-          // to do safely.  For now, this is safe and works.
-          var cs = pattern.substring(classStart + 1, i)
-          try {
-            RegExp('[' + cs + ']')
-          } catch (er) {
-            // not a valid class!
-            var sp = this.parse(cs, SUBPARSE)
-            re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]'
-            hasMagic = hasMagic || sp[1]
-            inClass = false
-            continue
-          }
+        // split where the last [ was, make sure we don't have
+        // an invalid re. if so, re-walk the contents of the
+        // would-be class to re-translate any characters that
+        // were passed through as-is
+        // TODO: It would probably be faster to determine this
+        // without a try/catch and a new RegExp, but it's tricky
+        // to do safely.  For now, this is safe and works.
+        var cs = pattern.substring(classStart + 1, i)
+        try {
+          RegExp('[' + cs + ']')
+        } catch (er) {
+          // not a valid class!
+          var sp = this.parse(cs, SUBPARSE)
+          re = re.substr(0, reClassStart) + '\\[' + sp[0] + '\\]'
+          hasMagic = hasMagic || sp[1]
+          inClass = false
+          continue
         }
 
         // finish up the class.
@@ -6868,9 +7415,7 @@ function parse (pattern, isSub) {
   // something that could conceivably capture a dot
   var addPatternStart = false
   switch (re.charAt(0)) {
-    case '.':
-    case '[':
-    case '(': addPatternStart = true
+    case '[': case '.': case '(': addPatternStart = true
   }
 
   // Hack to work around lack of negative lookbehind in JS
@@ -6932,7 +7477,7 @@ function parse (pattern, isSub) {
   var flags = options.nocase ? 'i' : ''
   try {
     var regExp = new RegExp('^' + re + '$', flags)
-  } catch (er) {
+  } catch (er) /* istanbul ignore next - should be impossible */ {
     // If it was an invalid regular expression, then it can't match
     // anything.  This trick looks for a character after the end of
     // the string, which is of course impossible, except in multi-line
@@ -6990,7 +7535,7 @@ function makeRe () {
 
   try {
     this.regexp = new RegExp(re, flags)
-  } catch (ex) {
+  } catch (ex) /* istanbul ignore next - should be impossible */ {
     this.regexp = false
   }
   return this.regexp
@@ -7008,8 +7553,8 @@ minimatch.match = function (list, pattern, options) {
   return list
 }
 
-Minimatch.prototype.match = match
-function match (f, partial) {
+Minimatch.prototype.match = function match (f, partial) {
+  if (typeof partial === 'undefined') partial = this.partial
   this.debug('match', f, this.pattern)
   // short-circuit in the case of busted things.
   // comments, etc.
@@ -7091,6 +7636,7 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
 
     // should be impossible.
     // some invalid regexp stuff in the set.
+    /* istanbul ignore if */
     if (p === false) return false
 
     if (p === GLOBSTAR) {
@@ -7164,6 +7710,7 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
       // no match was found.
       // However, in partial mode, we can't say this is necessarily over.
       // If there's more *pattern* left, then
+      /* istanbul ignore if */
       if (partial) {
         // ran out of file
         this.debug('\n>>> no match, partial?', file, fr, pattern, pr)
@@ -7177,11 +7724,7 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
     // patterns with magic have been turned into regexps.
     var hit
     if (typeof p === 'string') {
-      if (options.nocase) {
-        hit = f.toLowerCase() === p.toLowerCase()
-      } else {
-        hit = f === p
-      }
+      hit = f === p
       this.debug('string match', p, f, hit)
     } else {
       hit = f.match(p)
@@ -7212,16 +7755,16 @@ Minimatch.prototype.matchOne = function (file, pattern, partial) {
     // this is ok if we're doing the match as part of
     // a glob fs traversal.
     return partial
-  } else if (pi === pl) {
+  } else /* istanbul ignore else */ if (pi === pl) {
     // ran out of pattern, still have file left.
     // this is only acceptable if we're on the very last
     // empty segment of a file with a trailing slash.
     // a/* should match a/b/
-    var emptyFileEnd = (fi === fl - 1) && (file[fi] === '')
-    return emptyFileEnd
+    return (fi === fl - 1) && (file[fi] === '')
   }
 
   // should be unreachable.
+  /* istanbul ignore next */
   throw new Error('wtf?')
 }
 
@@ -7574,13 +8117,13 @@ module.exports = __nccwpck_require__(4219);
 "use strict";
 
 
-var net = __nccwpck_require__(1631);
-var tls = __nccwpck_require__(4016);
-var http = __nccwpck_require__(8605);
-var https = __nccwpck_require__(7211);
-var events = __nccwpck_require__(8614);
-var assert = __nccwpck_require__(2357);
-var util = __nccwpck_require__(1669);
+var net = __nccwpck_require__(1808);
+var tls = __nccwpck_require__(4404);
+var http = __nccwpck_require__(3685);
+var https = __nccwpck_require__(5687);
+var events = __nccwpck_require__(2361);
+var assert = __nccwpck_require__(9491);
+var util = __nccwpck_require__(3837);
 
 
 exports.httpOverHttp = httpOverHttp;
@@ -7840,6 +8383,652 @@ exports.debug = debug; // for test
 
 /***/ }),
 
+/***/ 5840:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+Object.defineProperty(exports, "v1", ({
+  enumerable: true,
+  get: function () {
+    return _v.default;
+  }
+}));
+Object.defineProperty(exports, "v3", ({
+  enumerable: true,
+  get: function () {
+    return _v2.default;
+  }
+}));
+Object.defineProperty(exports, "v4", ({
+  enumerable: true,
+  get: function () {
+    return _v3.default;
+  }
+}));
+Object.defineProperty(exports, "v5", ({
+  enumerable: true,
+  get: function () {
+    return _v4.default;
+  }
+}));
+Object.defineProperty(exports, "NIL", ({
+  enumerable: true,
+  get: function () {
+    return _nil.default;
+  }
+}));
+Object.defineProperty(exports, "version", ({
+  enumerable: true,
+  get: function () {
+    return _version.default;
+  }
+}));
+Object.defineProperty(exports, "validate", ({
+  enumerable: true,
+  get: function () {
+    return _validate.default;
+  }
+}));
+Object.defineProperty(exports, "stringify", ({
+  enumerable: true,
+  get: function () {
+    return _stringify.default;
+  }
+}));
+Object.defineProperty(exports, "parse", ({
+  enumerable: true,
+  get: function () {
+    return _parse.default;
+  }
+}));
+
+var _v = _interopRequireDefault(__nccwpck_require__(8628));
+
+var _v2 = _interopRequireDefault(__nccwpck_require__(6409));
+
+var _v3 = _interopRequireDefault(__nccwpck_require__(5122));
+
+var _v4 = _interopRequireDefault(__nccwpck_require__(9120));
+
+var _nil = _interopRequireDefault(__nccwpck_require__(5332));
+
+var _version = _interopRequireDefault(__nccwpck_require__(1595));
+
+var _validate = _interopRequireDefault(__nccwpck_require__(6900));
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
+
+var _parse = _interopRequireDefault(__nccwpck_require__(2746));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/***/ }),
+
+/***/ 4569:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function md5(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === 'string') {
+    bytes = Buffer.from(bytes, 'utf8');
+  }
+
+  return _crypto.default.createHash('md5').update(bytes).digest();
+}
+
+var _default = md5;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 5332:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+var _default = '00000000-0000-0000-0000-000000000000';
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 2746:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _validate = _interopRequireDefault(__nccwpck_require__(6900));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function parse(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  let v;
+  const arr = new Uint8Array(16); // Parse ########-....-....-....-............
+
+  arr[0] = (v = parseInt(uuid.slice(0, 8), 16)) >>> 24;
+  arr[1] = v >>> 16 & 0xff;
+  arr[2] = v >>> 8 & 0xff;
+  arr[3] = v & 0xff; // Parse ........-####-....-....-............
+
+  arr[4] = (v = parseInt(uuid.slice(9, 13), 16)) >>> 8;
+  arr[5] = v & 0xff; // Parse ........-....-####-....-............
+
+  arr[6] = (v = parseInt(uuid.slice(14, 18), 16)) >>> 8;
+  arr[7] = v & 0xff; // Parse ........-....-....-####-............
+
+  arr[8] = (v = parseInt(uuid.slice(19, 23), 16)) >>> 8;
+  arr[9] = v & 0xff; // Parse ........-....-....-....-############
+  // (Use "/" to avoid 32-bit truncation when bit-shifting high-order bytes)
+
+  arr[10] = (v = parseInt(uuid.slice(24, 36), 16)) / 0x10000000000 & 0xff;
+  arr[11] = v / 0x100000000 & 0xff;
+  arr[12] = v >>> 24 & 0xff;
+  arr[13] = v >>> 16 & 0xff;
+  arr[14] = v >>> 8 & 0xff;
+  arr[15] = v & 0xff;
+  return arr;
+}
+
+var _default = parse;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 814:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+var _default = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 807:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = rng;
+
+var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const rnds8Pool = new Uint8Array(256); // # of random values to pre-allocate
+
+let poolPtr = rnds8Pool.length;
+
+function rng() {
+  if (poolPtr > rnds8Pool.length - 16) {
+    _crypto.default.randomFillSync(rnds8Pool);
+
+    poolPtr = 0;
+  }
+
+  return rnds8Pool.slice(poolPtr, poolPtr += 16);
+}
+
+/***/ }),
+
+/***/ 5274:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _crypto = _interopRequireDefault(__nccwpck_require__(6113));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function sha1(bytes) {
+  if (Array.isArray(bytes)) {
+    bytes = Buffer.from(bytes);
+  } else if (typeof bytes === 'string') {
+    bytes = Buffer.from(bytes, 'utf8');
+  }
+
+  return _crypto.default.createHash('sha1').update(bytes).digest();
+}
+
+var _default = sha1;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 8950:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _validate = _interopRequireDefault(__nccwpck_require__(6900));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Convert array of 16 byte values to UUID string format of the form:
+ * XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+ */
+const byteToHex = [];
+
+for (let i = 0; i < 256; ++i) {
+  byteToHex.push((i + 0x100).toString(16).substr(1));
+}
+
+function stringify(arr, offset = 0) {
+  // Note: Be careful editing this code!  It's been tuned for performance
+  // and works in ways you may not expect. See https://github.com/uuidjs/uuid/pull/434
+  const uuid = (byteToHex[arr[offset + 0]] + byteToHex[arr[offset + 1]] + byteToHex[arr[offset + 2]] + byteToHex[arr[offset + 3]] + '-' + byteToHex[arr[offset + 4]] + byteToHex[arr[offset + 5]] + '-' + byteToHex[arr[offset + 6]] + byteToHex[arr[offset + 7]] + '-' + byteToHex[arr[offset + 8]] + byteToHex[arr[offset + 9]] + '-' + byteToHex[arr[offset + 10]] + byteToHex[arr[offset + 11]] + byteToHex[arr[offset + 12]] + byteToHex[arr[offset + 13]] + byteToHex[arr[offset + 14]] + byteToHex[arr[offset + 15]]).toLowerCase(); // Consistency check for valid UUID.  If this throws, it's likely due to one
+  // of the following:
+  // - One or more input array values don't map to a hex octet (leading to
+  // "undefined" in the uuid)
+  // - Invalid input values for the RFC `version` or `variant` fields
+
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Stringified UUID is invalid');
+  }
+
+  return uuid;
+}
+
+var _default = stringify;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 8628:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _rng = _interopRequireDefault(__nccwpck_require__(807));
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// **`v1()` - Generate time-based UUID**
+//
+// Inspired by https://github.com/LiosK/UUID.js
+// and http://docs.python.org/library/uuid.html
+let _nodeId;
+
+let _clockseq; // Previous uuid creation time
+
+
+let _lastMSecs = 0;
+let _lastNSecs = 0; // See https://github.com/uuidjs/uuid for API details
+
+function v1(options, buf, offset) {
+  let i = buf && offset || 0;
+  const b = buf || new Array(16);
+  options = options || {};
+  let node = options.node || _nodeId;
+  let clockseq = options.clockseq !== undefined ? options.clockseq : _clockseq; // node and clockseq need to be initialized to random values if they're not
+  // specified.  We do this lazily to minimize issues related to insufficient
+  // system entropy.  See #189
+
+  if (node == null || clockseq == null) {
+    const seedBytes = options.random || (options.rng || _rng.default)();
+
+    if (node == null) {
+      // Per 4.5, create and 48-bit node id, (47 random bits + multicast bit = 1)
+      node = _nodeId = [seedBytes[0] | 0x01, seedBytes[1], seedBytes[2], seedBytes[3], seedBytes[4], seedBytes[5]];
+    }
+
+    if (clockseq == null) {
+      // Per 4.2.2, randomize (14 bit) clockseq
+      clockseq = _clockseq = (seedBytes[6] << 8 | seedBytes[7]) & 0x3fff;
+    }
+  } // UUID timestamps are 100 nano-second units since the Gregorian epoch,
+  // (1582-10-15 00:00).  JSNumbers aren't precise enough for this, so
+  // time is handled internally as 'msecs' (integer milliseconds) and 'nsecs'
+  // (100-nanoseconds offset from msecs) since unix epoch, 1970-01-01 00:00.
+
+
+  let msecs = options.msecs !== undefined ? options.msecs : Date.now(); // Per 4.2.1.2, use count of uuid's generated during the current clock
+  // cycle to simulate higher resolution clock
+
+  let nsecs = options.nsecs !== undefined ? options.nsecs : _lastNSecs + 1; // Time since last uuid creation (in msecs)
+
+  const dt = msecs - _lastMSecs + (nsecs - _lastNSecs) / 10000; // Per 4.2.1.2, Bump clockseq on clock regression
+
+  if (dt < 0 && options.clockseq === undefined) {
+    clockseq = clockseq + 1 & 0x3fff;
+  } // Reset nsecs if clock regresses (new clockseq) or we've moved onto a new
+  // time interval
+
+
+  if ((dt < 0 || msecs > _lastMSecs) && options.nsecs === undefined) {
+    nsecs = 0;
+  } // Per 4.2.1.2 Throw error if too many uuids are requested
+
+
+  if (nsecs >= 10000) {
+    throw new Error("uuid.v1(): Can't create more than 10M uuids/sec");
+  }
+
+  _lastMSecs = msecs;
+  _lastNSecs = nsecs;
+  _clockseq = clockseq; // Per 4.1.4 - Convert from unix epoch to Gregorian epoch
+
+  msecs += 12219292800000; // `time_low`
+
+  const tl = ((msecs & 0xfffffff) * 10000 + nsecs) % 0x100000000;
+  b[i++] = tl >>> 24 & 0xff;
+  b[i++] = tl >>> 16 & 0xff;
+  b[i++] = tl >>> 8 & 0xff;
+  b[i++] = tl & 0xff; // `time_mid`
+
+  const tmh = msecs / 0x100000000 * 10000 & 0xfffffff;
+  b[i++] = tmh >>> 8 & 0xff;
+  b[i++] = tmh & 0xff; // `time_high_and_version`
+
+  b[i++] = tmh >>> 24 & 0xf | 0x10; // include version
+
+  b[i++] = tmh >>> 16 & 0xff; // `clock_seq_hi_and_reserved` (Per 4.2.2 - include variant)
+
+  b[i++] = clockseq >>> 8 | 0x80; // `clock_seq_low`
+
+  b[i++] = clockseq & 0xff; // `node`
+
+  for (let n = 0; n < 6; ++n) {
+    b[i + n] = node[n];
+  }
+
+  return buf || (0, _stringify.default)(b);
+}
+
+var _default = v1;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 6409:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _v = _interopRequireDefault(__nccwpck_require__(5998));
+
+var _md = _interopRequireDefault(__nccwpck_require__(4569));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v3 = (0, _v.default)('v3', 0x30, _md.default);
+var _default = v3;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 5998:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = _default;
+exports.URL = exports.DNS = void 0;
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
+
+var _parse = _interopRequireDefault(__nccwpck_require__(2746));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function stringToBytes(str) {
+  str = unescape(encodeURIComponent(str)); // UTF8 escape
+
+  const bytes = [];
+
+  for (let i = 0; i < str.length; ++i) {
+    bytes.push(str.charCodeAt(i));
+  }
+
+  return bytes;
+}
+
+const DNS = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+exports.DNS = DNS;
+const URL = '6ba7b811-9dad-11d1-80b4-00c04fd430c8';
+exports.URL = URL;
+
+function _default(name, version, hashfunc) {
+  function generateUUID(value, namespace, buf, offset) {
+    if (typeof value === 'string') {
+      value = stringToBytes(value);
+    }
+
+    if (typeof namespace === 'string') {
+      namespace = (0, _parse.default)(namespace);
+    }
+
+    if (namespace.length !== 16) {
+      throw TypeError('Namespace must be array-like (16 iterable integer values, 0-255)');
+    } // Compute hash of namespace and value, Per 4.3
+    // Future: Use spread syntax when supported on all platforms, e.g. `bytes =
+    // hashfunc([...namespace, ... value])`
+
+
+    let bytes = new Uint8Array(16 + value.length);
+    bytes.set(namespace);
+    bytes.set(value, namespace.length);
+    bytes = hashfunc(bytes);
+    bytes[6] = bytes[6] & 0x0f | version;
+    bytes[8] = bytes[8] & 0x3f | 0x80;
+
+    if (buf) {
+      offset = offset || 0;
+
+      for (let i = 0; i < 16; ++i) {
+        buf[offset + i] = bytes[i];
+      }
+
+      return buf;
+    }
+
+    return (0, _stringify.default)(bytes);
+  } // Function#name is not settable on some platforms (#270)
+
+
+  try {
+    generateUUID.name = name; // eslint-disable-next-line no-empty
+  } catch (err) {} // For CommonJS default export support
+
+
+  generateUUID.DNS = DNS;
+  generateUUID.URL = URL;
+  return generateUUID;
+}
+
+/***/ }),
+
+/***/ 5122:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _rng = _interopRequireDefault(__nccwpck_require__(807));
+
+var _stringify = _interopRequireDefault(__nccwpck_require__(8950));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function v4(options, buf, offset) {
+  options = options || {};
+
+  const rnds = options.random || (options.rng || _rng.default)(); // Per 4.4, set bits for version and `clock_seq_hi_and_reserved`
+
+
+  rnds[6] = rnds[6] & 0x0f | 0x40;
+  rnds[8] = rnds[8] & 0x3f | 0x80; // Copy bytes to buffer, if provided
+
+  if (buf) {
+    offset = offset || 0;
+
+    for (let i = 0; i < 16; ++i) {
+      buf[offset + i] = rnds[i];
+    }
+
+    return buf;
+  }
+
+  return (0, _stringify.default)(rnds);
+}
+
+var _default = v4;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 9120:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _v = _interopRequireDefault(__nccwpck_require__(5998));
+
+var _sha = _interopRequireDefault(__nccwpck_require__(5274));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const v5 = (0, _v.default)('v5', 0x50, _sha.default);
+var _default = v5;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 6900:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _regex = _interopRequireDefault(__nccwpck_require__(814));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function validate(uuid) {
+  return typeof uuid === 'string' && _regex.default.test(uuid);
+}
+
+var _default = validate;
+exports["default"] = _default;
+
+/***/ }),
+
+/***/ 1595:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({
+  value: true
+}));
+exports["default"] = void 0;
+
+var _validate = _interopRequireDefault(__nccwpck_require__(6900));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function version(uuid) {
+  if (!(0, _validate.default)(uuid)) {
+    throw TypeError('Invalid UUID');
+  }
+
+  return parseInt(uuid.substr(14, 1), 16);
+}
+
+var _default = version;
+exports["default"] = _default;
+
+/***/ }),
+
 /***/ 399:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -7847,7 +9036,11 @@ exports.debug = debug; // for test
 
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
 }) : (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     o[k2] = m[k];
@@ -7883,7 +9076,8 @@ async function runDeployment() {
             "dangerous-clean-slate": (0, parse_1.optionalBoolean)("dangerous-clean-slate", core.getInput("dangerous-clean-slate")),
             "exclude": (0, parse_1.optionalStringArray)("exclude", core.getMultilineInput("exclude")),
             "log-level": (0, parse_1.optionalLogLevel)("log-level", core.getInput("log-level")),
-            "security": (0, parse_1.optionalSecurity)("security", core.getInput("security"))
+            "security": (0, parse_1.optionalSecurity)("security", core.getInput("security")),
+            "timeout": (0, parse_1.optionalInt)("timeout", core.getInput("timeout"))
         };
         await (0, ftp_deploy_1.deploy)(args);
     }
@@ -7997,7 +9191,7 @@ exports.optionalStringArray = optionalStringArray;
 
 /***/ }),
 
-/***/ 2357:
+/***/ 9491:
 /***/ ((module) => {
 
 "use strict";
@@ -8005,7 +9199,7 @@ module.exports = require("assert");
 
 /***/ }),
 
-/***/ 6417:
+/***/ 6113:
 /***/ ((module) => {
 
 "use strict";
@@ -8013,7 +9207,7 @@ module.exports = require("crypto");
 
 /***/ }),
 
-/***/ 8614:
+/***/ 2361:
 /***/ ((module) => {
 
 "use strict";
@@ -8021,7 +9215,7 @@ module.exports = require("events");
 
 /***/ }),
 
-/***/ 5747:
+/***/ 7147:
 /***/ ((module) => {
 
 "use strict";
@@ -8029,7 +9223,7 @@ module.exports = require("fs");
 
 /***/ }),
 
-/***/ 8605:
+/***/ 3685:
 /***/ ((module) => {
 
 "use strict";
@@ -8037,7 +9231,7 @@ module.exports = require("http");
 
 /***/ }),
 
-/***/ 7211:
+/***/ 5687:
 /***/ ((module) => {
 
 "use strict";
@@ -8045,7 +9239,7 @@ module.exports = require("https");
 
 /***/ }),
 
-/***/ 1631:
+/***/ 1808:
 /***/ ((module) => {
 
 "use strict";
@@ -8053,7 +9247,7 @@ module.exports = require("net");
 
 /***/ }),
 
-/***/ 2087:
+/***/ 2037:
 /***/ ((module) => {
 
 "use strict";
@@ -8061,7 +9255,7 @@ module.exports = require("os");
 
 /***/ }),
 
-/***/ 5622:
+/***/ 1017:
 /***/ ((module) => {
 
 "use strict";
@@ -8069,7 +9263,7 @@ module.exports = require("path");
 
 /***/ }),
 
-/***/ 2413:
+/***/ 2781:
 /***/ ((module) => {
 
 "use strict";
@@ -8077,7 +9271,7 @@ module.exports = require("stream");
 
 /***/ }),
 
-/***/ 4016:
+/***/ 4404:
 /***/ ((module) => {
 
 "use strict";
@@ -8085,7 +9279,7 @@ module.exports = require("tls");
 
 /***/ }),
 
-/***/ 1669:
+/***/ 3837:
 /***/ ((module) => {
 
 "use strict";
